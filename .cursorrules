@@ -1,0 +1,13 @@
+# Rules
+Apply the following rules to the codebase
+
+## Shadcn Rule
+1. You must use `npx shadcn@latest add <component-name>` to add new shadcn components. Never use `npx shadcn-ui@latest add <component-name>` because it is deprecated.
+
+## EsLint Rule
+1. Make sure you fix all the linting errors and warnings.
+
+## Vite + React + Tailwind CSS + TypeScript Rule
+
+1. Use 'use client' directive for client-side components
+2. Style with Tailwind CSS utility classes for responsive design
