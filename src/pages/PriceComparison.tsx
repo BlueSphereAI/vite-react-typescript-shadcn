@@ -54,7 +54,6 @@ const mockProcedures: MedicalProcedure[] = [
 
 const PriceComparison = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedProcedure, setSelectedProcedure] = useState<MedicalProcedure | null>(null)
 
   const filteredProcedures = mockProcedures.filter((procedure) =>
     procedure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,7 +138,6 @@ const PriceComparison = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedProcedure(procedure)}
                         >
                           View Details
                         </Button>
