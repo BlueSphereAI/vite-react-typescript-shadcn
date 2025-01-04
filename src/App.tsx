@@ -5,9 +5,7 @@ import { ContractSubmission } from './pages/Dashboard/ContractSubmission/Contrac
 import { ImmutableRecords } from './pages/Dashboard/ImmutableRecords/ImmutableRecords'
 import { NegotiationLog } from './pages/Dashboard/NegotiationLog/NegotiationLog'
 import { ApprovalWorkflow } from './pages/Dashboard/ApprovalWorkflow/ApprovalWorkflow'
-
-// Placeholder components for dashboard routes
-const AuditTrail = () => <div>Audit Trail Page</div>
+import { AuditTrail } from './pages/Dashboard/AuditTrail/AuditTrail'
 
 function App() {
   return (
