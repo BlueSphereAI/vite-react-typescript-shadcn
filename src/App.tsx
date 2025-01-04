@@ -3,9 +3,9 @@ import { Home } from './pages'
 import { Dashboard } from './pages/Dashboard/Dashboard'
 import { ContractSubmission } from './pages/Dashboard/ContractSubmission/ContractSubmission'
 import { ImmutableRecords } from './pages/Dashboard/ImmutableRecords/ImmutableRecords'
+import { NegotiationLog } from './pages/Dashboard/NegotiationLog/NegotiationLog'
 
 // Placeholder components for dashboard routes
-const NegotiationLog = () => <div>Negotiation Log Page</div>
 const ApprovalWorkflow = () => <div>Approval Workflow Page</div>
 const AuditTrail = () => <div>Audit Trail Page</div>
 
