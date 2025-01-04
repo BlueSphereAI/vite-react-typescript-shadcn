@@ -1,6 +1,5 @@
 'use client'
 
-import React, { useState } from 'react'
 import { Badge } from '../../../components/ui/badge'
 import {
   Table,
@@ -52,8 +51,6 @@ const mockRecords = [
 ]
 
 export function ImmutableRecords() {
-  const [selectedRecord, setSelectedRecord] = useState<typeof mockRecords[0] | null>(null)
-
   const verifyOnBlockchain = (hash: string) => {
     // TODO: Implement actual blockchain verification
     console.log('Verifying hash:', hash)
@@ -101,7 +98,6 @@ export function ImmutableRecords() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedRecord(record)}
                         >
                           Details
                         </Button>

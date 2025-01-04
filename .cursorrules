@@ -12,5 +12,5 @@ Apply the following rules to the codebase
 1. Use 'use client' directive for client-side components
 2. Style with Tailwind CSS utility classes for responsive design
 3. Do not export pages as default, instead export them as named exports and import them with the page name.
-4. Import ui components using absolute paths starting with @/components/ui.
-5. Do not import React for client-side rendering components.
+4. Import components using absolute paths. Never use relative paths.
+5. Remove all the unused imports, variables, and components.

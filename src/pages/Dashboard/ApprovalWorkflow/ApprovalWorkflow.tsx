@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Progress } from '../../../components/ui/progress'
@@ -55,7 +55,6 @@ const mockContracts = [
 ]
 
 export function ApprovalWorkflow() {
-  const [selectedContract, setSelectedContract] = useState<typeof mockContracts[0] | null>(null)
   const [comments, setComments] = useState('')
 
   const handleApprove = (contract: typeof mockContracts[0]) => {

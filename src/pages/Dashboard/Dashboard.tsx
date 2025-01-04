@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../../components/layout/Sidebar'
 import { Sheet, SheetContent, SheetTrigger } from '../../components/ui/sheet'

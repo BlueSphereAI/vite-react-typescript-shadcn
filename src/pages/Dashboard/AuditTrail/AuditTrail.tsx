@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
@@ -165,7 +165,7 @@ export function AuditTrail() {
 
       {/* Timeline */}
       <div className="space-y-4">
-        {filteredAuditTrail.map((item, index) => (
+        {filteredAuditTrail.map((item) => (
           <Card key={item.id}>
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
