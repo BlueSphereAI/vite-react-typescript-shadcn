@@ -1,20 +1,31 @@
 'use client'
 
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from "../../components/ui/button"
 
 export function Home() {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Header Section */}
       <header className="w-full py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center">
-          <img 
-            src="https://clearcontract.greensphere.one/images/logo.jpg"
-            alt="ClearContract Logo"
-            className="h-12 w-auto"
-          />
-          <h1 className="ml-4 text-2xl font-bold text-gray-900">ClearContract</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src="https://clearcontract.greensphere.one/images/logo.jpg"
+              alt="ClearContract Logo"
+              className="h-12 w-auto"
+            />
+            <h1 className="ml-4 text-2xl font-bold text-gray-900">ClearContract</h1>
+          </div>
+          <Button 
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+          >
+            Go to Dashboard
+          </Button>
         </div>
       </header>
 
@@ -33,6 +44,7 @@ export function Home() {
               variant="default" 
               size="lg"
               className="px-8"
+              onClick={() => navigate('/dashboard')}
             >
               Get Started
             </Button>
