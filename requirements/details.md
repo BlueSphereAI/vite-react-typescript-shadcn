@@ -22,13 +22,6 @@ This is the initial page users see upon visiting the platform.
   - **Description**: Briefly describes the benefits of using blockchain for contract transparency.
   - **Use Case**: A user unfamiliar with the application can understand its purpose quickly.
 
-- **Login/Signup Buttons**
-  - **Type**: Buttons
-  - **Actions**: Navigate to Login or Signup Page
-  - **Style/Position**: Top-right corner of the page.
-  - **Description**: Buttons allowing existing users to log in and new users to register.
-  - **Use Case**: A user can either start the registration process or log into their existing account.
-
 ## 2. Dashboard Page (dashboard.tsx)
 This page serves as the main hub for users after logging in.
 
