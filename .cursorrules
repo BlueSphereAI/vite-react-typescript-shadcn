@@ -11,3 +11,4 @@ Apply the following rules to the codebase
 
 1. Use 'use client' directive for client-side components
 2. Style with Tailwind CSS utility classes for responsive design
+3. Do not export components as default, instead export them as named exports and import them with the component name.
