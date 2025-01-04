@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Home } from './pages'
 import { Dashboard } from './pages/Dashboard/Dashboard'
+import { ContractSubmission } from './pages/Dashboard/ContractSubmission/ContractSubmission'
 
 // Placeholder components for dashboard routes
-const ContractSubmission = () => <div>Contract Submission Page</div>
 const ImmutableRecords = () => <div>Immutable Records Page</div>
 const NegotiationLog = () => <div>Negotiation Log Page</div>
 const ApprovalWorkflow = () => <div>Approval Workflow Page</div>
