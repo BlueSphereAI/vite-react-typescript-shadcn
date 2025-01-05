@@ -6,22 +6,27 @@ import { ImmutableRecords } from './pages/Dashboard/ImmutableRecords/ImmutableRe
 import { NegotiationLog } from './pages/Dashboard/NegotiationLog/NegotiationLog'
 import { ApprovalWorkflow } from './pages/Dashboard/ApprovalWorkflow/ApprovalWorkflow'
 import { AuditTrail } from './pages/Dashboard/AuditTrail/AuditTrail'
+import { AppProvider } from './state/context/AppContext'
+import { Notifications } from './components/shared/Notifications'
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route index element={<Navigate to="submit" replace />} />
-          <Route path="submit" element={<ContractSubmission />} />
-          <Route path="records" element={<ImmutableRecords />} />
-          <Route path="negotiations" element={<NegotiationLog />} />
-          <Route path="approvals" element={<ApprovalWorkflow />} />
-          <Route path="audit" element={<AuditTrail />} />
-        </Route>
-      </Routes>
-    </Router>
+    <AppProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route index element={<Navigate to="submit" replace />} />
+            <Route path="submit" element={<ContractSubmission />} />
+            <Route path="records" element={<ImmutableRecords />} />
+            <Route path="negotiations" element={<NegotiationLog />} />
+            <Route path="approvals" element={<ApprovalWorkflow />} />
+            <Route path="audit" element={<AuditTrail />} />
+          </Route>
+        </Routes>
+        <Notifications />
+      </Router>
+    </AppProvider>
   )
 }
 
