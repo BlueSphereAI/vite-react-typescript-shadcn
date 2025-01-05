@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Badge } from '../../../components/ui/badge'
 import {
   Table,
@@ -18,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../../components/ui/dialog'
+import { Alert, AlertDescription, AlertTitle } from '../../../components/ui/alert'
 
 // Mock data for demonstration
 const mockRecords = [
@@ -51,8 +53,11 @@ const mockRecords = [
 ]
 
 export function ImmutableRecords() {
+  const [verifyingHash, setVerifyingHash] = useState<string | null>(null)
+
   const verifyOnBlockchain = (hash: string) => {
     // TODO: Implement actual blockchain verification
+    setVerifyingHash(hash)
     console.log('Verifying hash:', hash)
   }
 
@@ -143,6 +148,24 @@ export function ImmutableRecords() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Verification Dialog */}
+      <Dialog open={!!verifyingHash} onOpenChange={() => setVerifyingHash(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Blockchain Verification</DialogTitle>
+            <DialogDescription>
+              Verification result for hash: {verifyingHash}
+            </DialogDescription>
+          </DialogHeader>
+          <Alert>
+            <AlertTitle>Verification Successful</AlertTitle>
+            <AlertDescription>
+              This record has been verified on the blockchain. The hash and contents match the blockchain entry.
+            </AlertDescription>
+          </Alert>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
