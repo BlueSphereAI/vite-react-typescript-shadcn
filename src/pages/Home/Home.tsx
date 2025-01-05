@@ -2,14 +2,15 @@
 
 import { useNavigate } from 'react-router-dom'
 import { Button } from "../../components/ui/button"
+import styles from './Home.module.css'
 
 export function Home() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div>
       {/* Header Section */}
-      <header className="w-full py-6 px-4 sm:px-6 lg:px-8">
+      <header className="w-full py-6 px-4 sm:px-6 lg:px-8 fixed top-0 bg-white/80 backdrop-blur-sm z-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <img 
@@ -28,17 +29,17 @@ export function Home() {
         </div>
       </header>
 
-      {/* Introduction Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center">
-          <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+      {/* Hero Section */}
+      <section className={styles.hero}>
+        <div className={styles.heroContent}>
+          <h2 className={styles.heroTitle}>
             Enhancing Government Procurement Transparency
           </h2>
-          <p className="mt-5 max-w-3xl mx-auto text-xl text-gray-500">
+          <p className={styles.heroDescription}>
             Leveraging blockchain technology to ensure transparent and immutable records of contract processes. 
             We provide a secure platform for contract negotiations, amendments, and approvals with a complete audit trail.
           </p>
-          <div className="mt-8 flex justify-center gap-4">
+          <div className={styles.heroActions}>
             <Button 
               variant="default" 
               size="lg"
@@ -56,23 +57,31 @@ export function Home() {
             </Button>
           </div>
         </div>
+      </section>
 
-        {/* Features Grid */}
-        <div className="mt-24 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">Immutable Records</h3>
-            <p className="mt-2 text-gray-600">Secure, tamper-proof storage of all contract-related activities on the blockchain.</p>
+      {/* Features Section */}
+      <section className={styles.features}>
+        <div className={styles.featuresGrid}>
+          <div className={styles.featureCard}>
+            <h3 className={styles.featureTitle}>Immutable Records</h3>
+            <p className={styles.featureDescription}>
+              Secure, tamper-proof storage of all contract-related activities on the blockchain.
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">Transparent Process</h3>
-            <p className="mt-2 text-gray-600">Complete visibility into contract negotiations, amendments, and approval workflows.</p>
+          <div className={styles.featureCard}>
+            <h3 className={styles.featureTitle}>Transparent Process</h3>
+            <p className={styles.featureDescription}>
+              Complete visibility into contract negotiations, amendments, and approval workflows.
+            </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">Audit Trail</h3>
-            <p className="mt-2 text-gray-600">Comprehensive tracking of all actions and changes throughout the contract lifecycle.</p>
+          <div className={styles.featureCard}>
+            <h3 className={styles.featureTitle}>Audit Trail</h3>
+            <p className={styles.featureDescription}>
+              Comprehensive tracking of all actions and changes throughout the contract lifecycle.
+            </p>
           </div>
         </div>
-      </main>
+      </section>
     </div>
   )
 } 
