@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from '../../../components/ui/select'
 import { Card, CardContent } from '../../../components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Copy, Check, ArrowUpDown } from 'lucide-react'
+import { cn } from '../../../lib/utils'
 
 // Mock data for demonstration
 const mockRecords = [
@@ -54,34 +55,79 @@ const mockRecords = [
   },
 ]
 
-type FilterType = 'all' | 'submission' | 'amendment' | 'approval'
+type FilterType = 'all' | 'Contract Submission' | 'Contract Amendment' | 'Contract Approval'
+type SortField = 'timestamp' | 'action' | 'contractId'
+type SortOrder = 'asc' | 'desc'
 
 export function ImmutableRecords() {
   const [verifyingHash, setVerifyingHash] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [isVerifying, setIsVerifying] = useState(false)
+  const [verificationSuccess, setVerificationSuccess] = useState<boolean | null>(null)
+  const [copiedHash, setCopiedHash] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<SortField>('timestamp')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
   const verifyOnBlockchain = async (hash: string) => {
     setVerifyingHash(hash)
     setIsVerifying(true)
-    // Simulate blockchain verification delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    setIsVerifying(false)
+    setVerificationSuccess(null)
+    
+    try {
+      // Simulate blockchain verification delay
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Simulate 90% success rate
+      const success = Math.random() > 0.1
+      setVerificationSuccess(success)
+    } catch (error) {
+      setVerificationSuccess(false)
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
-  const filteredRecords = mockRecords.filter(record => {
-    const matchesSearch = 
-      record.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.contractId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.details.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesFilter = 
-      filterType === 'all' || 
-      record.action.toLowerCase().includes(filterType.toLowerCase())
+  const copyToClipboard = async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash)
+      setCopiedHash(hash)
+      setTimeout(() => setCopiedHash(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
-    return matchesSearch && matchesFilter
-  })
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+  }
+
+  const filteredAndSortedRecords = mockRecords
+    .filter(record => {
+      const matchesSearch = 
+        record.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        record.contractId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        record.details.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesFilter = 
+        filterType === 'all' || 
+        record.action === filterType
+
+      return matchesSearch && matchesFilter
+    })
+    .sort((a, b) => {
+      const order = sortOrder === 'asc' ? 1 : -1
+      if (sortField === 'timestamp') {
+        return (new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) * order
+      }
+      return (a[sortField] > b[sortField] ? 1 : -1) * order
+    })
+
+  const uniqueActions = Array.from(new Set(mockRecords.map(record => record.action)))
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -92,7 +138,7 @@ export function ImmutableRecords() {
         </p>
       </div>
 
-      {/* Search and Filter Controls */}
+      {/* Search, Filter, and Sort Controls */}
       <div className="flex flex-col sm:flex-row gap-4 sticky top-0 bg-white/80 backdrop-blur-sm py-4 z-10">
         <div className="flex-1">
           <Input
@@ -102,25 +148,38 @@ export function ImmutableRecords() {
             className="max-w-md"
           />
         </div>
-        <Select
-          value={filterType}
-          onValueChange={(value) => setFilterType(value as FilterType)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Records</SelectItem>
-            <SelectItem value="submission">Submissions</SelectItem>
-            <SelectItem value="amendment">Amendments</SelectItem>
-            <SelectItem value="approval">Approvals</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select
+            value={filterType}
+            onValueChange={(value) => setFilterType(value as FilterType)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Records</SelectItem>
+              {uniqueActions.map(action => (
+                <SelectItem key={action} value={action}>{action}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              "w-10 h-10",
+              sortField === 'timestamp' && "border-primary text-primary"
+            )}
+            onClick={() => toggleSort('timestamp')}
+          >
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Records List */}
       <div className="space-y-4">
-        {filteredRecords.map((record) => (
+        {filteredAndSortedRecords.map((record) => (
           <Card 
             key={record.id} 
             className="transition-all hover:shadow-md border-l-4 hover:border-l-8"
@@ -141,7 +200,7 @@ export function ImmutableRecords() {
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500">
-                    <span>{record.timestamp}</span>
+                    <span>{new Date(record.timestamp).toLocaleString()}</span>
                     <span className="mx-2">•</span>
                     <span className="font-medium">{record.contractId}</span>
                   </div>
@@ -176,11 +235,27 @@ export function ImmutableRecords() {
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-700">Blockchain Hash</h4>
-                            <p className="text-sm font-mono text-gray-600 break-all">{record.hash}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-mono text-gray-600 break-all">{record.hash}</p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => copyToClipboard(record.hash)}
+                              >
+                                {copiedHash === record.hash ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-700">Timestamp</h4>
-                            <p className="text-sm text-gray-600">{record.timestamp}</p>
+                            <p className="text-sm text-gray-600">
+                              {new Date(record.timestamp).toLocaleString()}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -201,13 +276,27 @@ export function ImmutableRecords() {
               </div>
               <div className="mt-2 font-mono text-xs text-gray-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gray-300" />
-                Hash: {record.hash}
+                <div className="flex items-center gap-2 flex-1">
+                  <span>Hash: {record.hash}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => copyToClipboard(record.hash)}
+                  >
+                    {copiedHash === record.hash ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
 
-        {filteredRecords.length === 0 && (
+        {filteredAndSortedRecords.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-lg border">
             <p className="text-gray-500">No records found matching your criteria.</p>
           </div>
@@ -227,7 +316,7 @@ export function ImmutableRecords() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             </div>
-          ) : (
+          ) : verificationSuccess === true ? (
             <Alert className="bg-green-50 border-green-200">
               <AlertTitle className="text-green-800 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -238,7 +327,18 @@ export function ImmutableRecords() {
                 The record is immutable and cannot be altered.
               </AlertDescription>
             </Alert>
-          )}
+          ) : verificationSuccess === false ? (
+            <Alert className="bg-red-50 border-red-200">
+              <AlertTitle className="text-red-800 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                Verification Failed
+              </AlertTitle>
+              <AlertDescription className="text-red-700">
+                Unable to verify this record on the blockchain. The hash or contents may have been altered.
+                Please contact support if you believe this is an error.
+              </AlertDescription>
+            </Alert>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
