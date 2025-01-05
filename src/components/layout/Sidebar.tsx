@@ -5,6 +5,10 @@ import { Button } from '../ui/button'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 
+interface SidebarProps {
+  onNavigate?: () => void
+}
+
 const navigationItems = [
   { name: 'Contract Submission', path: '/dashboard/submit' },
   { name: 'Immutable Record Log', path: '/dashboard/records' },
@@ -13,14 +17,20 @@ const navigationItems = [
   { name: 'Audit Trail', path: '/dashboard/audit' },
 ]
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }: SidebarProps) {
   const location = useLocation()
+
+  const handleNavigate = () => {
+    if (onNavigate) {
+      onNavigate()
+    }
+  }
 
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 fixed left-0 top-0 flex flex-col">
       {/* Logo Section */}
       <div className="p-6 flex-shrink-0">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center" onClick={handleNavigate}>
           <img
             src="https://clearcontract.greensphere.one/images/logo.jpg"
             alt="ClearContract Logo"
@@ -42,7 +52,7 @@ export function Sidebar() {
               className="w-full justify-start"
               asChild
             >
-              <Link to={item.path}>{item.name}</Link>
+              <Link to={item.path} onClick={handleNavigate}>{item.name}</Link>
             </Button>
           ))}
         </nav>

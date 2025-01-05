@@ -2,6 +2,7 @@
 
 import { useNavigate } from 'react-router-dom'
 import { Button } from "../../components/ui/button"
+import { Shield, FileText, History } from 'lucide-react'
 import styles from './Home.module.css'
 
 export function Home() {
@@ -23,6 +24,7 @@ export function Home() {
           <Button 
             variant="outline"
             onClick={() => navigate('/dashboard')}
+            className="rounded-full"
           >
             Go to Dashboard
           </Button>
@@ -31,6 +33,11 @@ export function Home() {
 
       {/* Hero Section */}
       <section className={styles.hero}>
+        <div className={styles.heroBackground}>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-blue-50 opacity-90" />
+          <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-blue-500/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+        </div>
         <div className={styles.heroContent}>
           <h2 className={styles.heroTitle}>
             Enhancing Government Procurement Transparency
@@ -43,7 +50,7 @@ export function Home() {
             <Button 
               variant="default" 
               size="lg"
-              className="px-8"
+              className="rounded-full px-8"
               onClick={() => navigate('/dashboard')}
             >
               Get Started
@@ -51,7 +58,7 @@ export function Home() {
             <Button 
               variant="outline" 
               size="lg"
-              className="px-8"
+              className="rounded-full px-8"
             >
               Learn More
             </Button>
@@ -63,21 +70,33 @@ export function Home() {
       <section className={styles.features}>
         <div className={styles.featuresGrid}>
           <div className={styles.featureCard}>
+            <div className="mb-6 p-3 rounded-full bg-blue-50 w-fit">
+              <Shield className="h-6 w-6 text-blue-500" />
+            </div>
             <h3 className={styles.featureTitle}>Immutable Records</h3>
             <p className={styles.featureDescription}>
               Secure, tamper-proof storage of all contract-related activities on the blockchain.
+              Every change is permanently recorded and verifiable.
             </p>
           </div>
           <div className={styles.featureCard}>
+            <div className="mb-6 p-3 rounded-full bg-blue-50 w-fit">
+              <FileText className="h-6 w-6 text-blue-500" />
+            </div>
             <h3 className={styles.featureTitle}>Transparent Process</h3>
             <p className={styles.featureDescription}>
               Complete visibility into contract negotiations, amendments, and approval workflows.
+              Track every step of the procurement process.
             </p>
           </div>
           <div className={styles.featureCard}>
+            <div className="mb-6 p-3 rounded-full bg-blue-50 w-fit">
+              <History className="h-6 w-6 text-blue-500" />
+            </div>
             <h3 className={styles.featureTitle}>Audit Trail</h3>
             <p className={styles.featureDescription}>
               Comprehensive tracking of all actions and changes throughout the contract lifecycle.
+              Never lose track of important decisions and modifications.
             </p>
           </div>
         </div>
