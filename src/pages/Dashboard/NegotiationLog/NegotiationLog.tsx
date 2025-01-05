@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
-import { Send, User, Users, Search } from 'lucide-react'
+import { Send, Users, Check, CheckCheck } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -30,6 +30,7 @@ interface Message {
   timestamp: Date
   avatar?: string
   role?: string
+  status: 'sending' | 'sent' | 'delivered' | 'read'
 }
 
 interface Participant {
@@ -38,6 +39,7 @@ interface Participant {
   role: string
   avatar?: string
   status: 'online' | 'offline'
+  isTyping?: boolean
 }
 
 const mockContracts = [
@@ -57,6 +59,38 @@ export function NegotiationLog() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [participants, setParticipants] = useState(mockParticipants)
+  const [isTyping, setIsTyping] = useState(false)
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    // Simulate other participants typing
+    const typingInterval = setInterval(() => {
+      const randomParticipant = Math.floor(Math.random() * participants.length)
+      if (participants[randomParticipant].status === 'online') {
+        setParticipants(prev => prev.map((p, i) => 
+          i === randomParticipant ? { ...p, isTyping: true } : p
+        ))
+        setTimeout(() => {
+          setParticipants(prev => prev.map((p, i) => 
+            i === randomParticipant ? { ...p, isTyping: false } : p
+          ))
+        }, 3000)
+      }
+    }, 10000)
+
+    return () => clearInterval(typingInterval)
+  }, [participants])
+
+  const handleTyping = () => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout)
+    }
+    setIsTyping(true)
+    const timeout = setTimeout(() => {
+      setIsTyping(false)
+    }, 2000)
+    setTypingTimeout(timeout)
+  }
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,16 +102,36 @@ export function NegotiationLog() {
       sender: 'Current User',
       timestamp: new Date(),
       role: 'Contract Manager',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Current'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Current',
+      status: 'sending'
     }
 
-    setMessages([...messages, message])
+    setMessages(prev => [...prev, message])
     setNewMessage('')
+    setIsTyping(false)
+
+    // Simulate message status updates
+    setTimeout(() => {
+      setMessages(prev => prev.map(m => 
+        m.id === message.id ? { ...m, status: 'sent' as const } : m
+      ))
+    }, 1000)
+
+    setTimeout(() => {
+      setMessages(prev => prev.map(m => 
+        m.id === message.id ? { ...m, status: 'delivered' as const } : m
+      ))
+    }, 2000)
+
+    setTimeout(() => {
+      setMessages(prev => prev.map(m => 
+        m.id === message.id ? { ...m, status: 'read' as const } : m
+      ))
+    }, 3000)
   }
 
   const handleContractSelect = (contractId: string) => {
     setSelectedContract(contractId)
-    // Simulate loading messages for the selected contract
     setMessages([
       {
         id: '1',
@@ -85,7 +139,8 @@ export function NegotiationLog() {
         sender: 'John Doe',
         timestamp: new Date('2024-01-20T10:00:00'),
         role: 'Contract Manager',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John'
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+        status: 'read'
       },
       {
         id: '2',
@@ -93,9 +148,23 @@ export function NegotiationLog() {
         sender: 'Jane Smith',
         timestamp: new Date('2024-01-20T10:05:00'),
         role: 'Legal Advisor',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane'
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
+        status: 'read'
       }
     ])
+  }
+
+  const getMessageStatus = (status: Message['status']) => {
+    switch (status) {
+      case 'sending':
+        return <div className="animate-pulse h-3 w-3 rounded-full bg-gray-400" />
+      case 'sent':
+        return <Check className="h-3 w-3 text-gray-400" />
+      case 'delivered':
+        return <CheckCheck className="h-3 w-3 text-gray-400" />
+      case 'read':
+        return <CheckCheck className="h-3 w-3 text-blue-500" />
+    }
   }
 
   return (
@@ -168,11 +237,16 @@ export function NegotiationLog() {
                             <p className="text-sm text-gray-500">{participant.role}</p>
                           </div>
                         </div>
-                        <Badge
-                          variant={participant.status === 'online' ? 'default' : 'secondary'}
-                        >
-                          {participant.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {participant.isTyping && (
+                            <span className="text-xs text-gray-500 italic">typing...</span>
+                          )}
+                          <Badge
+                            variant={participant.status === 'online' ? 'default' : 'secondary'}
+                          >
+                            {participant.status}
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -211,18 +285,36 @@ export function NegotiationLog() {
                         {message.timestamp.toLocaleTimeString()}
                       </span>
                     </div>
-                    <div
-                      className={`rounded-lg p-3 ${
-                        message.sender === 'Current User'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}
-                    >
-                      {message.text}
+                    <div className="flex items-end gap-2">
+                      <div
+                        className={`rounded-lg p-3 ${
+                          message.sender === 'Current User'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        {message.text}
+                      </div>
+                      {message.sender === 'Current User' && (
+                        <div className="flex-shrink-0">
+                          {getMessageStatus(message.status)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
+              {/* Typing Indicators */}
+              {(isTyping || participants.some(p => p.isTyping)) && (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-sm">typing...</span>
+                </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -231,7 +323,10 @@ export function NegotiationLog() {
             <div className="flex gap-2">
               <Input
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => {
+                  setNewMessage(e.target.value)
+                  handleTyping()
+                }}
                 placeholder="Type your message..."
                 className="flex-1"
               />

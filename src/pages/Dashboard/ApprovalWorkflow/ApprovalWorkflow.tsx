@@ -187,7 +187,6 @@ export function ApprovalWorkflow() {
         </ScrollArea>
       </Card>
 
-      {/* Action Dialog */}
       <Dialog open={!!selectedContract && !!actionType} onOpenChange={() => {
         setSelectedContract(null)
         setActionType(null)
