@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Calendar as CalendarIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '../../../components/ui/button'
 import { Calendar } from '../../../components/ui/calendar'
 import {
@@ -19,6 +19,7 @@ import {
 import { Badge } from '../../../components/ui/badge'
 import { Card, CardContent } from '../../../components/ui/card'
 import { Input } from '../../../components/ui/input'
+import { ScrollArea } from '../../../components/ui/scroll-area'
 
 // Mock data for demonstration
 const mockAuditTrail = [
@@ -31,6 +32,10 @@ const mockAuditTrail = [
     role: 'Contract Manager',
     details: 'Initial contract submission for Project Alpha',
     category: 'submission',
+    changes: [
+      { field: 'Title', from: null, to: 'Project Alpha Contract' },
+      { field: 'Status', from: null, to: 'Pending Review' },
+    ],
   },
   {
     id: '2',
@@ -41,6 +46,10 @@ const mockAuditTrail = [
     role: 'Legal Advisor',
     details: 'Legal review completed with minor amendments',
     category: 'review',
+    changes: [
+      { field: 'Section 3.2', from: '30 days', to: '45 days' },
+      { field: 'Status', from: 'Pending Review', to: 'Under Review' },
+    ],
   },
   {
     id: '3',
@@ -51,16 +60,10 @@ const mockAuditTrail = [
     role: 'Department Head',
     details: 'Budget adjustments approved',
     category: 'amendment',
-  },
-  {
-    id: '4',
-    timestamp: '2024-01-21T14:20:00',
-    action: 'Contract Approval',
-    contractId: 'CTR-2024-001',
-    user: 'Sarah Wilson',
-    role: 'Senior Manager',
-    details: 'Final approval granted',
-    category: 'approval',
+    changes: [
+      { field: 'Budget', from: '$100,000', to: '$120,000' },
+      { field: 'Timeline', from: 'Q2 2024', to: 'Q3 2024' },
+    ],
   },
 ]
 
@@ -69,20 +72,28 @@ const categories = [
   { label: 'Submissions', value: 'submission' },
   { label: 'Reviews', value: 'review' },
   { label: 'Amendments', value: 'amendment' },
-  { label: 'Approvals', value: 'approval' },
 ]
 
 export function AuditTrail() {
   const [date, setDate] = useState<Date>()
   const [category, setCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
+
+  const toggleExpand = (id: string) => {
+    setExpandedItems(prev =>
+      prev.includes(id)
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    )
+  }
 
   const filteredAuditTrail = mockAuditTrail
     .filter((item) => {
       if (category !== 'all' && item.category !== category) return false
       if (date && !format(new Date(item.timestamp), 'yyyy-MM-dd').includes(format(date, 'yyyy-MM-dd'))) return false
       if (searchQuery && !Object.values(item).some(value => 
-        value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+        value?.toString().toLowerCase().includes(searchQuery.toLowerCase())
       )) return false
       return true
     })
@@ -93,7 +104,6 @@ export function AuditTrail() {
       submission: 'bg-blue-500',
       review: 'bg-yellow-500',
       amendment: 'bg-purple-500',
-      approval: 'bg-green-500',
     }
     return colors[category as keyof typeof colors] || 'bg-gray-500'
   }
@@ -108,7 +118,7 @@ export function AuditTrail() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 sticky top-0 bg-white/80 backdrop-blur-sm py-4 z-10">
         <div className="flex-1 min-w-[200px]">
           <Input
             placeholder="Search audit trail..."
@@ -164,42 +174,72 @@ export function AuditTrail() {
       </div>
 
       {/* Timeline */}
-      <div className="space-y-4">
-        {filteredAuditTrail.map((item) => (
-          <Card key={item.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className={`w-3 h-3 rounded-full mt-2 ${getCategoryColor(item.category)}`} />
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
+      <ScrollArea className="h-[calc(100vh-20rem)]">
+        <div className="relative space-y-4 pl-8 before:absolute before:left-4 before:top-2 before:h-[calc(100%-2rem)] before:w-0.5 before:bg-gray-200">
+          {filteredAuditTrail.map((item) => (
+            <Card key={item.id} className="relative">
+              <div className={`absolute -left-8 top-6 w-4 h-4 rounded-full border-4 border-white ${getCategoryColor(item.category)}`} />
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
                       <h3 className="font-medium">{item.action}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>{format(new Date(item.timestamp), 'PPpp')}</span>
-                        <span>•</span>
-                        <span>{item.contractId}</span>
-                      </div>
+                      <Badge variant="outline">{item.category}</Badge>
                     </div>
-                    <Badge variant="outline">{item.category}</Badge>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>{format(new Date(item.timestamp), 'PPpp')}</span>
+                      <span>•</span>
+                      <span>{item.contractId}</span>
+                    </div>
                   </div>
-                  <p className="text-gray-600">{item.details}</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>{item.user}</span>
-                    <span>•</span>
-                    <span>{item.role}</span>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleExpand(item.id)}
+                  >
+                    {expandedItems.includes(item.id) ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                <p className="mt-2 text-gray-600">{item.details}</p>
+                {expandedItems.includes(item.id) && (
+                  <div className="mt-4 space-y-4 border-t pt-4">
+                    <div className="grid gap-2">
+                      <div className="text-sm font-medium text-gray-500">Changes Made:</div>
+                      {item.changes.map((change, index) => (
+                        <div key={index} className="grid grid-cols-3 gap-4 text-sm">
+                          <div className="font-medium">{change.field}</div>
+                          <div className="text-gray-500">
+                            {change.from || '(empty)'}
+                          </div>
+                          <div className="text-gray-900">
+                            {change.to}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>Modified by:</span>
+                      <span className="font-medium">{item.user}</span>
+                      <span>•</span>
+                      <span>{item.role}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
 
-        {filteredAuditTrail.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No audit trail entries found matching your filters.
-          </div>
-        )}
-      </div>
+          {filteredAuditTrail.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-lg border">
+              <p className="text-gray-500">No audit trail entries found matching your filters.</p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   )
 } 

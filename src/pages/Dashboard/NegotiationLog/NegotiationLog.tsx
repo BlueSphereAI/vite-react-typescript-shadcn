@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '../../../components/ui/button'
 import { Input } from '../../../components/ui/input'
 import { Card, CardContent } from '../../../components/ui/card'
@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from '../../../components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
+import { ScrollArea } from '../../../components/ui/scroll-area'
+import { Send } from 'lucide-react'
 
 // Mock data for demonstration
 const mockContracts = [
@@ -54,6 +56,15 @@ export function NegotiationLog() {
   const [selectedContract, setSelectedContract] = useState<string>('')
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState(mockMessages)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedContract) return
@@ -65,7 +76,7 @@ export function NegotiationLog() {
       role: 'Contract Manager',
       avatar: '/avatars/user.jpg',
       message: newMessage,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleString(),
     }
 
     setMessages([...messages, message])
@@ -106,38 +117,51 @@ export function NegotiationLog() {
 
       {/* Messages Area */}
       <Card className="flex-1 overflow-hidden">
-        <CardContent className="p-4 space-y-4 h-full flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-4">
+        <CardContent className="p-4 h-full flex flex-col">
+          <ScrollArea className="flex-1 pr-4">
             {selectedContract ? (
-              filteredMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className="flex items-start space-x-4"
-                >
-                  <Avatar>
-                    <AvatarImage src={message.avatar} alt={message.sender} />
-                    <AvatarFallback>{message.sender[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-semibold">{message.sender}</span>
-                      <span className="text-sm text-gray-500">({message.role})</span>
+              <div className="space-y-4">
+                {filteredMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex items-start space-x-4 ${
+                      message.sender === 'Current User' ? 'flex-row-reverse space-x-reverse' : ''
+                    }`}
+                  >
+                    <Avatar>
+                      <AvatarImage src={message.avatar} alt={message.sender} />
+                      <AvatarFallback>{message.sender[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className={`flex-1 space-y-1 ${
+                      message.sender === 'Current User' ? 'text-right' : ''
+                    }`}>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold">{message.sender}</span>
+                        <span className="text-sm text-gray-500">({message.role})</span>
+                      </div>
+                      <div className={`inline-block rounded-lg px-4 py-2 ${
+                        message.sender === 'Current User'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-900'
+                      }`}>
+                        <p>{message.message}</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{message.timestamp}</span>
                     </div>
-                    <p className="text-gray-700">{message.message}</p>
-                    <span className="text-xs text-gray-500">{message.timestamp}</span>
                   </div>
-                </div>
-              ))
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 Select a contract to view negotiations
               </div>
             )}
-          </div>
+          </ScrollArea>
 
           {/* Message Input */}
           {selectedContract && (
-            <div className="flex space-x-2 pt-4 border-t">
+            <div className="flex space-x-2 pt-4 border-t mt-4">
               <Input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -149,7 +173,9 @@ export function NegotiationLog() {
                   }
                 }}
               />
-              <Button onClick={handleSendMessage}>Send</Button>
+              <Button onClick={handleSendMessage} size="icon">
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </CardContent>
