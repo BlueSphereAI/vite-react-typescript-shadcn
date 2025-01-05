@@ -1,245 +1,180 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
-import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react'
-import { Button } from '../../../components/ui/button'
-import { Calendar } from '../../../components/ui/calendar'
+import { Card } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../../components/ui/dropdown-menu'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '../../../components/ui/popover'
-import { Badge } from '../../../components/ui/badge'
-import { Card, CardContent } from '../../../components/ui/card'
-import { Input } from '../../../components/ui/input'
-import { ScrollArea } from '../../../components/ui/scroll-area'
+  FileText,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronRight,
+  ChevronDown
+} from 'lucide-react'
 
-// Mock data for demonstration
-const mockAuditTrail = [
+interface TimelineEvent {
+  id: string
+  type: 'submission' | 'negotiation' | 'approval' | 'rejection'
+  title: string
+  description: string
+  timestamp: Date
+  user: string
+  details?: string
+}
+
+const mockEvents: TimelineEvent[] = [
   {
     id: '1',
-    timestamp: '2024-01-20T14:30:00',
-    action: 'Contract Submission',
-    contractId: 'CTR-2024-001',
+    type: 'submission',
+    title: 'Contract Submitted',
+    description: 'Initial contract document uploaded',
+    timestamp: new Date('2024-01-20T09:00:00'),
     user: 'John Doe',
-    role: 'Contract Manager',
-    details: 'Initial contract submission for Project Alpha',
-    category: 'submission',
-    changes: [
-      { field: 'Title', from: null, to: 'Project Alpha Contract' },
-      { field: 'Status', from: null, to: 'Pending Review' },
-    ],
+    details: 'Contract ID: CTR-2024-001'
   },
   {
     id: '2',
-    timestamp: '2024-01-20T15:45:00',
-    action: 'Contract Review',
-    contractId: 'CTR-2024-001',
+    type: 'negotiation',
+    title: 'Negotiation Started',
+    description: 'Terms discussion initiated',
+    timestamp: new Date('2024-01-20T10:30:00'),
     user: 'Jane Smith',
-    role: 'Legal Advisor',
-    details: 'Legal review completed with minor amendments',
-    category: 'review',
-    changes: [
-      { field: 'Section 3.2', from: '30 days', to: '45 days' },
-      { field: 'Status', from: 'Pending Review', to: 'Under Review' },
-    ],
+    details: 'Discussing delivery timeline'
   },
   {
     id: '3',
-    timestamp: '2024-01-21T09:15:00',
-    action: 'Contract Amendment',
-    contractId: 'CTR-2024-001',
+    type: 'approval',
+    title: 'Department Approval',
+    description: 'First level approval received',
+    timestamp: new Date('2024-01-21T14:15:00'),
     user: 'Mike Johnson',
-    role: 'Department Head',
-    details: 'Budget adjustments approved',
-    category: 'amendment',
-    changes: [
-      { field: 'Budget', from: '$100,000', to: '$120,000' },
-      { field: 'Timeline', from: 'Q2 2024', to: 'Q3 2024' },
-    ],
-  },
+    details: 'Approved with minor comments'
+  }
 ]
 
-const categories = [
-  { label: 'All Activities', value: 'all' },
-  { label: 'Submissions', value: 'submission' },
-  { label: 'Reviews', value: 'review' },
-  { label: 'Amendments', value: 'amendment' },
-]
+const getEventIcon = (type: TimelineEvent['type']) => {
+  switch (type) {
+    case 'submission':
+      return <FileText className="h-5 w-5" />
+    case 'negotiation':
+      return <MessageSquare className="h-5 w-5" />
+    case 'approval':
+      return <CheckCircle className="h-5 w-5" />
+    case 'rejection':
+      return <XCircle className="h-5 w-5" />
+    default:
+      return <Clock className="h-5 w-5" />
+  }
+}
+
+const getEventColor = (type: TimelineEvent['type']) => {
+  switch (type) {
+    case 'submission':
+      return 'bg-blue-500 text-white'
+    case 'negotiation':
+      return 'bg-purple-500 text-white'
+    case 'approval':
+      return 'bg-green-500 text-white'
+    case 'rejection':
+      return 'bg-red-500 text-white'
+    default:
+      return 'bg-gray-500 text-white'
+  }
+}
 
 export function AuditTrail() {
-  const [date, setDate] = useState<Date>()
-  const [category, setCategory] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
 
-  const toggleExpand = (id: string) => {
-    setExpandedItems(prev =>
-      prev.includes(id)
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    )
-  }
-
-  const filteredAuditTrail = mockAuditTrail
-    .filter((item) => {
-      if (category !== 'all' && item.category !== category) return false
-      if (date && !format(new Date(item.timestamp), 'yyyy-MM-dd').includes(format(date, 'yyyy-MM-dd'))) return false
-      if (searchQuery && !Object.values(item).some(value => 
-        value?.toString().toLowerCase().includes(searchQuery.toLowerCase())
-      )) return false
-      return true
-    })
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      submission: 'bg-blue-500',
-      review: 'bg-yellow-500',
-      amendment: 'bg-purple-500',
+  const toggleEvent = (eventId: string) => {
+    const newExpanded = new Set(expandedEvents)
+    if (newExpanded.has(eventId)) {
+      newExpanded.delete(eventId)
+    } else {
+      newExpanded.add(eventId)
     }
-    return colors[category as keyof typeof colors] || 'bg-gray-500'
+    setExpandedEvents(newExpanded)
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Trail</h1>
-        <p className="mt-2 text-gray-600">
-          View a complete timeline of all contract-related activities.
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 sticky top-0 bg-white/80 backdrop-blur-sm py-4 z-10">
-        <div className="flex-1 min-w-[200px]">
-          <Input
-            placeholder="Search audit trail..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
+    <div className="max-w-4xl mx-auto">
+      <Card className="p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Contract Audit Trail</h2>
+          <p className="text-gray-600 mt-2">
+            Track all activities and changes throughout the contract lifecycle
+          </p>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              {categories.find((c) => c.value === category)?.label || 'Filter by Category'}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {categories.map((cat) => (
-              <DropdownMenuItem
-                key={cat.value}
-                onClick={() => setCategory(cat.value)}
-              >
-                {cat.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ScrollArea className="h-[calc(100vh-16rem)]">
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-200" />
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, 'PPP') : 'Pick a date'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-
-        {date && (
-          <Button
-            variant="ghost"
-            onClick={() => setDate(undefined)}
-          >
-            Clear Date
-          </Button>
-        )}
-      </div>
-
-      {/* Timeline */}
-      <ScrollArea className="h-[calc(100vh-20rem)]">
-        <div className="relative space-y-4 pl-8 before:absolute before:left-4 before:top-2 before:h-[calc(100%-2rem)] before:w-0.5 before:bg-gray-200">
-          {filteredAuditTrail.map((item) => (
-            <Card key={item.id} className="relative">
-              <div className={`absolute -left-8 top-6 w-4 h-4 rounded-full border-4 border-white ${getCategoryColor(item.category)}`} />
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{item.action}</h3>
-                      <Badge variant="outline">{item.category}</Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{format(new Date(item.timestamp), 'PPpp')}</span>
-                      <span>•</span>
-                      <span>{item.contractId}</span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleExpand(item.id)}
+            {/* Timeline Events */}
+            <div className="space-y-6">
+              {mockEvents.map((event) => (
+                <div key={event.id} className="relative pl-14">
+                  {/* Event Icon */}
+                  <div
+                    className={`absolute left-0 p-2 rounded-full ${getEventColor(
+                      event.type
+                    )}`}
                   >
-                    {expandedItems.includes(item.id) ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="mt-2 text-gray-600">{item.details}</p>
-                {expandedItems.includes(item.id) && (
-                  <div className="mt-4 space-y-4 border-t pt-4">
-                    <div className="grid gap-2">
-                      <div className="text-sm font-medium text-gray-500">Changes Made:</div>
-                      {item.changes.map((change, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-4 text-sm">
-                          <div className="font-medium">{change.field}</div>
-                          <div className="text-gray-500">
-                            {change.from || '(empty)'}
-                          </div>
-                          <div className="text-gray-900">
-                            {change.to}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>Modified by:</span>
-                      <span className="font-medium">{item.user}</span>
-                      <span>•</span>
-                      <span>{item.role}</span>
-                    </div>
+                    {getEventIcon(event.type)}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
 
-          {filteredAuditTrail.length === 0 && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg border">
-              <p className="text-gray-500">No audit trail entries found matching your filters.</p>
+                  {/* Event Content */}
+                  <div className="bg-white rounded-lg border p-4">
+                    <Button
+                      variant="ghost"
+                      className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+                      onClick={() => toggleEvent(event.id)}
+                    >
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                        <p className="text-sm text-gray-600">{event.description}</p>
+                      </div>
+                      {expandedEvents.has(event.id) ? (
+                        <ChevronDown className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      )}
+                    </Button>
+
+                    {/* Expanded Details */}
+                    {expandedEvents.has(event.id) && (
+                      <div className="mt-4 pt-4 border-t">
+                        <dl className="space-y-2 text-sm">
+                          <div>
+                            <dt className="text-gray-500">Timestamp</dt>
+                            <dd className="font-medium text-gray-900">
+                              {event.timestamp.toLocaleString()}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500">User</dt>
+                            <dd className="font-medium text-gray-900">{event.user}</dd>
+                          </div>
+                          {event.details && (
+                            <div>
+                              <dt className="text-gray-500">Details</dt>
+                              <dd className="font-medium text-gray-900">
+                                {event.details}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+      </Card>
     </div>
   )
 } 

@@ -1,176 +1,158 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '../../../components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card'
-import { Input } from '../../../components/ui/input'
-import { Label } from '../../../components/ui/label'
-import { Textarea } from '../../../components/ui/textarea'
-import { Alert, AlertDescription } from '../../../components/ui/alert'
-import { File, Upload, X } from 'lucide-react'
-import { validateFileType, formatFileSize } from '../../../lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Card } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { FileUp, Check, AlertCircle } from 'lucide-react'
+
+interface UploadStatus {
+  type: 'success' | 'error'
+  message: string
+}
 
 export function ContractSubmission() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const allowedTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  ]
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
-    setError(null)
-
     if (selectedFile) {
-      if (!validateFileType(selectedFile, allowedTypes)) {
-        setError('Please upload a PDF or Word document')
+      // Check file type
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      if (!validTypes.includes(selectedFile.type)) {
+        setUploadStatus({
+          type: 'error',
+          message: 'Please upload a PDF or Word document'
+        })
         return
       }
-      if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
-        setError('File size should be less than 10MB')
+      // Check file size (max 10MB)
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        setUploadStatus({
+          type: 'error',
+          message: 'File size should be less than 10MB'
+        })
         return
       }
       setFile(selectedFile)
+      setUploadStatus(null)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!file) {
-      setError('Please upload a contract document')
+      setUploadStatus({
+        type: 'error',
+        message: 'Please upload a contract document'
+      })
       return
     }
-    // TODO: Implement actual contract submission
-    console.log({ title, description, file })
+    // Simulate upload success
+    setUploadStatus({
+      type: 'success',
+      message: 'Contract submitted successfully'
+    })
+    // Reset form
+    setTitle('')
+    setDescription('')
+    setFile(null)
+    // Reset file input
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    if (fileInput) fileInput.value = ''
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Submit New Contract</h1>
-        <p className="mt-2 text-gray-600">
-          Upload a new contract for review and approval.
-        </p>
-      </div>
+    <div className="max-w-2xl mx-auto">
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="title">Contract Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter contract title"
+              required
+              className="mt-1"
+            />
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Contract Details</CardTitle>
-            <CardDescription>
-              Provide the basic information about the contract.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Contract Title</Label>
-              <Input
-                id="title"
-                placeholder="Enter contract title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter contract description"
+              required
+              className="mt-1 h-32"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="file">Upload Contract Document</Label>
+            <div className="mt-1">
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="file"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <FileUp className="w-8 h-8 mb-2 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PDF or Word (MAX. 10MB)</p>
+                    {file && (
+                      <p className="mt-2 text-sm text-blue-500 font-medium">
+                        Selected: {file.name}
+                      </p>
+                    )}
+                  </div>
+                  <input
+                    id="file"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileChange}
+                    required
+                  />
+                </label>
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Provide a detailed description of the contract"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[120px]"
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Contract Document</CardTitle>
-            <CardDescription>
-              Upload the contract document in PDF or Word format.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center w-full">
-              <label
-                htmlFor="file-upload"
-                className="w-full cursor-pointer"
-              >
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
-                  {file ? (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <File className="h-6 w-6 text-blue-500" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">{file.name}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setFile(null)
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                        <span className="relative rounded-md bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500">
-                          Upload a file
-                        </span>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs leading-5 text-gray-600">PDF or Word up to 10MB</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                />
-              </label>
-            </div>
-
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">
-            Cancel
+          <Button type="submit" className="w-full">
+            Submit Contract
           </Button>
-          <Button type="submit">Submit Contract</Button>
-        </div>
-      </form>
+        </form>
+      </Card>
+
+      {/* Status Dialog */}
+      <Dialog open={!!uploadStatus} onOpenChange={() => setUploadStatus(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {uploadStatus?.type === 'success' ? (
+                <Check className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )}
+              {uploadStatus?.type === 'success' ? 'Success' : 'Error'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className={uploadStatus?.type === 'success' ? 'text-green-600' : 'text-red-600'}>
+            {uploadStatus?.message}
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
