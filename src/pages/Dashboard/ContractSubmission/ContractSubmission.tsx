@@ -8,17 +8,36 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { FileUp, Check, AlertCircle } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Progress } from '@/components/ui/progress'
 
 interface UploadStatus {
   type: 'success' | 'error'
   message: string
 }
 
+const CONTRACT_TYPES = [
+  { id: 'purchase', name: 'Purchase Agreement' },
+  { id: 'service', name: 'Service Contract' },
+  { id: 'lease', name: 'Lease Agreement' },
+  { id: 'employment', name: 'Employment Contract' },
+  { id: 'nda', name: 'Non-Disclosure Agreement' },
+]
+
 export function ContractSubmission() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [contractType, setContractType] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [version, setVersion] = useState('1.0')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -47,41 +66,97 @@ export function ContractSubmission() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!file) {
+    if (!file || !contractType) {
       setUploadStatus({
         type: 'error',
-        message: 'Please upload a contract document'
+        message: !file ? 'Please upload a contract document' : 'Please select a contract type'
       })
       return
     }
-    // Simulate upload success
-    setUploadStatus({
-      type: 'success',
-      message: 'Contract submitted successfully'
-    })
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setFile(null)
-    // Reset file input
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
-    if (fileInput) fileInput.value = ''
+
+    // Simulate upload progress
+    setUploadProgress(0)
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 200)
+
+    // Simulate upload success after progress
+    setTimeout(() => {
+      clearInterval(interval)
+      setUploadStatus({
+        type: 'success',
+        message: 'Contract submitted successfully'
+      })
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setContractType('')
+      setFile(null)
+      setVersion('1.0')
+      setUploadProgress(0)
+      // Reset file input
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+      if (fileInput) fileInput.value = ''
+    }, 2500)
   }
 
   return (
     <div className="max-w-2xl mx-auto">
       <Card className="p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Submit New Contract</h2>
+          <p className="text-gray-600 mt-2">
+            Upload a new contract for review and approval
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="title">Contract Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter contract title"
+                required
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="version">Version</Label>
+              <Input
+                id="version"
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                placeholder="Enter version number"
+                required
+                className="mt-1"
+              />
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="title">Contract Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter contract title"
-              required
-              className="mt-1"
-            />
+            <Label htmlFor="contractType">Contract Type</Label>
+            <Select value={contractType} onValueChange={setContractType}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select contract type" />
+              </SelectTrigger>
+              <SelectContent>
+                {CONTRACT_TYPES.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -102,7 +177,7 @@ export function ContractSubmission() {
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="file"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300 transition-colors"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <FileUp className="w-8 h-8 mb-2 text-gray-500" />
@@ -132,6 +207,15 @@ export function ContractSubmission() {
           <Button type="submit" className="w-full">
             Submit Contract
           </Button>
+
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="space-y-2">
+              <Progress value={uploadProgress} className="h-2" />
+              <p className="text-sm text-gray-500 text-center">
+                Uploading... {uploadProgress}%
+              </p>
+            </div>
+          )}
         </form>
       </Card>
 
