@@ -23,9 +23,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { BarChart } from '@/components/ui/bar-chart'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 interface Procedure {
   id: string
@@ -37,6 +39,10 @@ interface Procedure {
   facility: string
   credentials: string[]
   type: string
+  category: string
+  recoveryTime: string
+  successRate: number
+  description: string
 }
 
 type SortField = 'name' | 'usPrice' | 'internationalPrice' | 'travelCost' | 'location' | 'savings'
@@ -61,6 +67,10 @@ const PriceComparison = () => {
       facility: 'Apollo Hospitals',
       credentials: ['JCI Accredited', 'ISO 9001:2015'],
       type: 'orthopedic',
+      category: 'Joint Replacement',
+      recoveryTime: '3-6 months',
+      successRate: 95,
+      description: 'Total hip replacement surgery involves removing damaged bone and cartilage and replacing them with prosthetic components.',
     },
     {
       id: '2',
@@ -72,6 +82,10 @@ const PriceComparison = () => {
       facility: 'Bumrungrad International',
       credentials: ['JCI Accredited', 'HIMSS Stage 7'],
       type: 'orthopedic',
+      category: 'Joint Replacement',
+      recoveryTime: '3-6 months',
+      successRate: 92,
+      description: 'Total knee replacement surgery replaces damaged knee joint surfaces with metal and plastic components to restore function.',
     },
     {
       id: '3',
@@ -83,6 +97,10 @@ const PriceComparison = () => {
       facility: 'Fortis Hospital',
       credentials: ['JCI Accredited', 'NABH Certified'],
       type: 'cardiac',
+      category: 'Cardiac Surgery',
+      recoveryTime: '6-12 weeks',
+      successRate: 98,
+      description: 'Coronary artery bypass grafting (CABG) improves blood flow to the heart by using grafts to bypass blocked arteries.',
     },
     {
       id: '4',
@@ -94,6 +112,10 @@ const PriceComparison = () => {
       facility: 'Memorial Hospital',
       credentials: ['ISO 9001:2015', 'Turkish Medical Association'],
       type: 'dental',
+      category: 'Dental Surgery',
+      recoveryTime: '3-6 months',
+      successRate: 97,
+      description: 'Dental implants are artificial tooth roots that provide a permanent base for fixed replacement teeth.',
     },
   ]
 
@@ -298,75 +320,152 @@ const PriceComparison = () => {
       </div>
 
       <Dialog open={!!selectedProcedure} onOpenChange={() => setSelectedProcedure(null)}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>{selectedProcedure?.name}</DialogTitle>
+            <DialogDescription>{selectedProcedure?.description}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
-            <div>
-              <h4 className="mb-2 font-semibold">Facility</h4>
-              <p>{selectedProcedure?.facility}</p>
+          <div className="grid gap-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Procedure Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <span className="font-semibold">Category:</span> {selectedProcedure?.category}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Type:</span> {selectedProcedure?.type}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Recovery Time:</span> {selectedProcedure?.recoveryTime}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Success Rate:</span> {selectedProcedure?.successRate}%
+                    <Progress value={selectedProcedure?.successRate} className="mt-1 h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facility Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <span className="font-semibold">Name:</span> {selectedProcedure?.facility}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Location:</span> {selectedProcedure?.location}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Credentials:</span>
+                    <ul className="mt-1 list-inside list-disc">
+                      {selectedProcedure?.credentials.map((credential) => (
+                        <li key={credential}>{credential}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div>
-              <h4 className="mb-2 font-semibold">Credentials</h4>
-              <ul className="list-inside list-disc">
-                {selectedProcedure?.credentials.map((credential) => (
-                  <li key={credential}>{credential}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-2 font-semibold">Cost Breakdown</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div>US Price:</div>
-                <div>${selectedProcedure?.usPrice.toLocaleString()}</div>
-                <div>International Price:</div>
-                <div>${selectedProcedure?.internationalPrice.toLocaleString()}</div>
-                <div>Travel Cost:</div>
-                <div>${selectedProcedure?.travelCost.toLocaleString()}</div>
-                <div className="font-semibold">Total Savings:</div>
-                <div className="font-semibold text-green-600">
-                  $
-                  {selectedProcedure
-                    ? (
-                        selectedProcedure.usPrice -
-                        (selectedProcedure.internationalPrice + selectedProcedure.travelCost)
-                      ).toLocaleString()
-                    : 0}
-                  {selectedProcedure && (
-                    <span className="ml-1">
-                      (
-                      {(
-                        ((selectedProcedure.usPrice -
-                          (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
-                          selectedProcedure.usPrice) *
-                        100
-                      ).toFixed(1)}
-                      %)
-                    </span>
-                  )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Cost Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="mb-2 font-semibold">Cost Breakdown</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>US Price:</span>
+                        <span>${selectedProcedure?.usPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>International Price:</span>
+                        <span>${selectedProcedure?.internationalPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Travel Cost:</span>
+                        <span>${selectedProcedure?.travelCost.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between border-t pt-2 font-semibold">
+                        <span>Total International Cost:</span>
+                        <span>
+                          ${selectedProcedure
+                            ? (
+                                selectedProcedure.internationalPrice + selectedProcedure.travelCost
+                              ).toLocaleString()
+                            : 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="mb-2 font-semibold">Savings</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-green-600">
+                        <span>Total Savings:</span>
+                        <span>
+                          ${selectedProcedure
+                            ? (
+                                selectedProcedure.usPrice -
+                                (selectedProcedure.internationalPrice + selectedProcedure.travelCost)
+                              ).toLocaleString()
+                            : 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                        <span>Savings Percentage:</span>
+                        <span>
+                          {selectedProcedure
+                            ? (
+                                ((selectedProcedure.usPrice -
+                                  (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
+                                  selectedProcedure.usPrice) *
+                                100
+                              ).toFixed(1)
+                            : 0}
+                          %
+                        </span>
+                      </div>
+                      <Progress
+                        value={
+                          selectedProcedure
+                            ? ((selectedProcedure.usPrice -
+                                (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
+                                selectedProcedure.usPrice) *
+                              100
+                            : 0
+                        }
+                        className="mt-2 h-2"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4">
-                <Progress 
-                  value={
-                    selectedProcedure
-                      ? ((selectedProcedure.usPrice -
-                          (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
-                          selectedProcedure.usPrice) *
-                        100
-                      : 0
-                  } 
-                  className="h-2" 
-                />
-              </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex space-x-4">
+              <Button
+                className="flex-1"
+                onClick={() => window.open(`/facilities/${selectedProcedure?.facility.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+              >
+                View Facility Details
+              </Button>
+              <Button
+                className="flex-1"
+                variant="outline"
+                onClick={() => {
+                  // Add to comparison list
+                }}
+              >
+                Add to Comparison
+              </Button>
             </div>
-            <Button
-              className="mt-2"
-              onClick={() => window.open(`/facilities/${selectedProcedure?.facility.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
-            >
-              View Facility Details
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

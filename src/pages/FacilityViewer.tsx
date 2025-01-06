@@ -27,6 +27,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel'
+import { Progress } from '@/components/ui/progress'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
+import { Toaster } from '@/components/ui/toaster'
 
 interface Review {
   id: string
@@ -42,6 +47,21 @@ interface Doctor {
   specialization: string
   qualifications: string[]
   experience: string
+  availability: {
+    days: string[]
+    hours: string
+  }
+  image: string
+}
+
+interface Procedure {
+  id: string
+  name: string
+  price: number
+  category: string
+  description: string
+  recoveryTime: string
+  successRate: number
 }
 
 const facilities = {
@@ -68,6 +88,11 @@ const facilities = {
         specialization: 'Orthopedic Surgery',
         qualifications: ['MBBS', 'MS (Ortho)', 'Fellowship in Joint Replacement'],
         experience: '15+ years',
+        availability: {
+          days: ['Monday', 'Wednesday', 'Friday'],
+          hours: '9:00 AM - 5:00 PM',
+        },
+        image: 'https://example.com/dr-johnson.jpg',
       },
       {
         id: '2',
@@ -75,6 +100,11 @@ const facilities = {
         specialization: 'Cardiology',
         qualifications: ['MBBS', 'MD (Cardiology)', 'Fellowship in Interventional Cardiology'],
         experience: '12+ years',
+        availability: {
+          days: ['Tuesday', 'Thursday', 'Saturday'],
+          hours: '10:00 AM - 6:00 PM',
+        },
+        image: 'https://example.com/dr-chen.jpg',
       },
     ],
     reviews: [
@@ -93,6 +123,26 @@ const facilities = {
         comment:
           'Very good experience overall. Clean facilities and knowledgeable doctors. Would recommend to others.',
         date: '2023-11-28',
+      },
+    ],
+    procedures: [
+      {
+        id: 'hip-replacement',
+        name: 'Hip Replacement',
+        price: 12000,
+        category: 'Orthopedics',
+        description: 'Total hip replacement surgery with state-of-the-art implants.',
+        recoveryTime: '3-6 months',
+        successRate: 95,
+      },
+      {
+        id: 'knee-replacement',
+        name: 'Knee Replacement',
+        price: 10000,
+        category: 'Orthopedics',
+        description: 'Total knee replacement surgery with advanced prosthetics.',
+        recoveryTime: '3-6 months',
+        successRate: 92,
       },
     ],
   },
@@ -119,6 +169,11 @@ const facilities = {
         specialization: 'Plastic Surgery',
         qualifications: ['MBBS', 'MS (Plastic Surgery)', 'Fellowship in Aesthetic Surgery'],
         experience: '18+ years',
+        availability: {
+          days: ['Monday', 'Wednesday', 'Friday'],
+          hours: '9:00 AM - 5:00 PM',
+        },
+        image: 'https://example.com/dr-wong.jpg',
       },
       {
         id: '2',
@@ -126,6 +181,11 @@ const facilities = {
         specialization: 'Cardiology',
         qualifications: ['MD', 'PhD', 'Fellowship in Interventional Cardiology'],
         experience: '15+ years',
+        availability: {
+          days: ['Tuesday', 'Thursday', 'Saturday'],
+          hours: '10:00 AM - 6:00 PM',
+        },
+        image: 'https://example.com/dr-park.jpg',
       },
     ],
     reviews: [
@@ -144,6 +204,26 @@ const facilities = {
         comment:
           'Highly professional staff and modern facilities. The entire experience was smooth and comfortable.',
         date: '2023-10-15',
+      },
+    ],
+    procedures: [
+      {
+        id: 'face-lift',
+        name: 'Face Lift',
+        price: 5000,
+        category: 'Plastic Surgery',
+        description: 'Facelift surgery to improve facial contours and reduce signs of aging.',
+        recoveryTime: '4-6 weeks',
+        successRate: 90,
+      },
+      {
+        id: 'breast-augmentation',
+        name: 'Breast Augmentation',
+        price: 8000,
+        category: 'Plastic Surgery',
+        description: 'Breast augmentation surgery with saline or silicone implants.',
+        recoveryTime: '3-4 weeks',
+        successRate: 85,
       },
     ],
   },
@@ -170,6 +250,11 @@ const facilities = {
         specialization: 'Dental Surgery',
         qualifications: ['DDS', 'PhD', 'Fellowship in Implantology'],
         experience: '20+ years',
+        availability: {
+          days: ['Monday', 'Wednesday', 'Friday'],
+          hours: '9:00 AM - 5:00 PM',
+        },
+        image: 'https://example.com/dr-yilmaz.jpg',
       },
       {
         id: '2',
@@ -177,6 +262,11 @@ const facilities = {
         specialization: 'Ophthalmology',
         qualifications: ['MD', 'Fellowship in LASIK Surgery'],
         experience: '16+ years',
+        availability: {
+          days: ['Tuesday', 'Thursday', 'Saturday'],
+          hours: '10:00 AM - 6:00 PM',
+        },
+        image: 'https://example.com/dr-kaya.jpg',
       },
     ],
     reviews: [
@@ -197,6 +287,26 @@ const facilities = {
         date: '2023-11-10',
       },
     ],
+    procedures: [
+      {
+        id: 'root-canal-therapy',
+        name: 'Root Canal Therapy',
+        price: 1000,
+        category: 'Dental Surgery',
+        description: 'Root canal therapy to save a tooth that is infected or abscessed.',
+        recoveryTime: '1-2 weeks',
+        successRate: 90,
+      },
+      {
+        id: 'teeth-whitening',
+        name: 'Teeth Whitening',
+        price: 500,
+        category: 'Dental Surgery',
+        description: 'Teeth whitening treatment to improve the appearance of your teeth.',
+        recoveryTime: '1-2 weeks',
+        successRate: 80,
+      },
+    ],
   },
 }
 
@@ -207,8 +317,14 @@ const FacilityViewer = () => {
     email: '',
     message: '',
   })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null)
+  const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null)
 
   const facility = facilities[id as keyof typeof facilities]
+
+  // Add toast hook
+  const { toast } = useToast()
 
   if (!facility) {
     return (
@@ -226,10 +342,89 @@ const FacilityViewer = () => {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
-    // Handle form submission
-    console.log('Form submitted:', contactForm)
+    if (validateForm()) {
+      // Handle form submission
+      console.log('Form submitted:', formData)
+      setIsDialogOpen(false)
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        date: '',
+        message: '',
+      })
+      setSelectedDoctor(null)
+      setSelectedProcedure(null)
+      
+      // Show success toast
+      toast({
+        title: 'Consultation Scheduled',
+        description: 'We will contact you shortly to confirm your appointment.',
+      })
+    }
+  }
+
+  // Add form state
+  interface FormData {
+    name: string
+    email: string
+    phone: string
+    date: string
+    message: string
+  }
+
+  // Add form state and validation
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    email: '',
+    phone: '',
+    date: '',
+    message: '',
+  })
+
+  const [formErrors, setFormErrors] = useState<Partial<FormData>>({})
+
+  const validateForm = () => {
+    const errors: Partial<FormData> = {}
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required'
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Invalid email format'
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone is required'
+    }
+    
+    if (!formData.date) {
+      errors.date = 'Date is required'
+    }
+    
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }))
+    // Clear error when user starts typing
+    if (formErrors[id as keyof FormData]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [id]: undefined
+      }))
+    }
   }
 
   return (
@@ -302,7 +497,59 @@ const FacilityViewer = () => {
         </CardContent>
       </Card>
 
-      {/* Doctor Profiles */}
+      {/* Available Procedures */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Available Procedures</CardTitle>
+          <CardDescription>Our specialized medical procedures and treatments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 md:grid-cols-2">
+            {facility.procedures.map((procedure) => (
+              <Card key={procedure.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>{procedure.name}</CardTitle>
+                      <CardDescription>{procedure.category}</CardDescription>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">${procedure.price.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">Starting from</div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p>{procedure.description}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-sm font-medium">Recovery Time</div>
+                        <div>{procedure.recoveryTime}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">Success Rate</div>
+                        <div className="flex items-center space-x-2">
+                          <span>{procedure.successRate}%</span>
+                          <Progress value={procedure.successRate} className="h-2 flex-1" />
+                        </div>
+                      </div>
+                    </div>
+                    <Button className="w-full" onClick={() => {
+                      setSelectedProcedure(procedure)
+                      setIsDialogOpen(true)
+                    }}>
+                      Schedule Consultation
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Doctor Profiles with Availability */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Our Doctors</CardTitle>
@@ -310,21 +557,51 @@ const FacilityViewer = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2">
-            {facility.doctors.map((doctor: Doctor) => (
+            {facility.doctors.map((doctor) => (
               <Card key={doctor.id}>
                 <CardHeader>
-                  <CardTitle>{doctor.name}</CardTitle>
-                  <CardDescription>{doctor.specialization}</CardDescription>
+                  <div className="flex items-start space-x-4">
+                    <div className="h-20 w-20 overflow-hidden rounded-full">
+                      <img
+                        src={doctor.image}
+                        alt={doctor.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <CardTitle>{doctor.name}</CardTitle>
+                      <CardDescription>{doctor.specialization}</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="mb-2">Experience: {doctor.experience}</p>
-                  <div>
-                    <h4 className="mb-1 font-semibold">Qualifications:</h4>
-                    <ul className="list-inside list-disc">
-                      {doctor.qualifications.map((qual: string) => (
-                        <li key={qual}>{qual}</li>
-                      ))}
-                    </ul>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="font-medium">Experience</div>
+                      <div>{doctor.experience}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">Qualifications</div>
+                      <ul className="list-inside list-disc">
+                        {doctor.qualifications.map((qual) => (
+                          <li key={qual}>{qual}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-medium">Availability</div>
+                      <div className="text-sm">
+                        {doctor.availability.days.join(', ')}
+                        <br />
+                        {doctor.availability.hours}
+                      </div>
+                    </div>
+                    <Button className="w-full" onClick={() => {
+                      setSelectedDoctor(doctor)
+                      setIsDialogOpen(true)
+                    }}>
+                      Book Appointment
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -401,6 +678,110 @@ const FacilityViewer = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Consultation Scheduling Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Schedule Consultation</DialogTitle>
+            <DialogDescription>
+              {selectedProcedure ? 
+                `Book a consultation for ${selectedProcedure.name}` : 
+                selectedDoctor ? 
+                  `Book an appointment with ${selectedDoctor.name}` : 
+                  'Schedule your consultation'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <div className="col-span-3">
+                <Input 
+                  id="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className={formErrors.name ? 'border-red-500' : ''}
+                />
+                {formErrors.name && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <div className="col-span-3">
+                <Input 
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={formErrors.email ? 'border-red-500' : ''}
+                />
+                {formErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Phone
+              </Label>
+              <div className="col-span-3">
+                <Input 
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className={formErrors.phone ? 'border-red-500' : ''}
+                />
+                {formErrors.phone && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.phone}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="date" className="text-right">
+                Date
+              </Label>
+              <div className="col-span-3">
+                <Input 
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={formErrors.date ? 'border-red-500' : ''}
+                />
+                {formErrors.date && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.date}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="message" className="text-right">
+                Message
+              </Label>
+              <Textarea 
+                id="message"
+                value={formData.message}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Any specific concerns or questions?"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit" onClick={handleSubmit}>
+              Book Consultation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Toaster />
     </div>
   )
 }
