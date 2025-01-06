@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Bell, CheckCircle, Clock, Calendar } from 'lucide-react'
+import { Bell, CheckCircle, Clock, Calendar, Info, AlertTriangle } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import {
   DropdownMenu,
@@ -79,7 +79,7 @@ const mockRecentlyViewed: RecentlyViewed[] = [
     price: 3500,
     viewedAt: '2024-01-14T15:45:00Z',
   },
-]
+].sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime())
 
 const mockBookingStatus: BookingStatus[] = [
   { status: 'Pending', count: 2, color: 'bg-yellow-500' },
@@ -159,6 +159,32 @@ const UserDashboard = () => {
     }
   }
 
+  const getNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle className="h-5 w-5 text-green-500" />
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />
+      default:
+        return <Info className="h-5 w-5 text-blue-500" />
+    }
+  }
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffInHours = Math.abs(now.getTime() - date.getTime()) / 36e5
+
+    if (diffInHours < 24) {
+      return `${Math.round(diffInHours)} hours ago`
+    }
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
   const unreadCount = notifications.filter(n => !n.read).length
 
   return (
@@ -222,7 +248,7 @@ const UserDashboard = () => {
       {/* Booking Status Overview */}
       <div className="mb-8 grid gap-6 md:grid-cols-3">
         {mockBookingStatus.map((status) => (
-          <Card key={status.status}>
+          <Card key={status.status} className="transition-transform duration-200 hover:scale-105">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg">
                 {status.status === 'Pending' && <Clock className="mr-2 h-5 w-5 text-yellow-500" />}
@@ -234,7 +260,11 @@ const UserDashboard = () => {
             <CardContent>
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-bold">{status.count}</span>
-                <Progress value={(status.count / 6) * 100} className="h-2 w-24" />
+                <Progress 
+                  value={(status.count / 6) * 100} 
+                  className="h-2 w-24"
+                  aria-label={`${status.status} bookings progress`}
+                />
               </div>
             </CardContent>
           </Card>
@@ -254,27 +284,32 @@ const UserDashboard = () => {
               className={`${getNotificationStyles(notification.type)} transition-colors duration-200 hover:bg-opacity-75 ${
                 !notification.read ? 'border-l-4' : ''
               }`}
+              role="alert"
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <AlertTitle className="text-sm font-semibold">
-                    {notification.title}
-                  </AlertTitle>
-                  <AlertDescription className="mt-1 text-sm">
-                    {notification.message}
-                  </AlertDescription>
+                <div className="flex items-start gap-3">
+                  {getNotificationIcon(notification.type)}
+                  <div>
+                    <AlertTitle className="text-sm font-semibold">
+                      {notification.title}
+                    </AlertTitle>
+                    <AlertDescription className="mt-1 text-sm">
+                      {notification.message}
+                    </AlertDescription>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      {formatTimestamp(notification.timestamp)}
+                    </div>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-xs"
                   onClick={() => markAsRead(notification.id)}
+                  aria-label={notification.read ? 'Notification read' : 'Mark notification as read'}
                 >
                   {notification.read ? 'Read' : 'Mark as read'}
                 </Button>
-              </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                {new Date(notification.timestamp).toLocaleString()}
               </div>
             </Alert>
           ))}
@@ -348,7 +383,7 @@ const UserDashboard = () => {
         <CardHeader>
           <CardTitle>Recently Viewed Procedures</CardTitle>
           <CardDescription>
-            Procedures you've viewed in the last 30 days
+            Quick access to procedures you've viewed in the last 30 days
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -357,29 +392,66 @@ const UserDashboard = () => {
               <TableRow>
                 <TableHead>Procedure</TableHead>
                 <TableHead>Facility</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Price</TableHead>
                 <TableHead>Viewed</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {mockRecentlyViewed.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                <TableRow 
+                  key={item.id}
+                  className="transition-colors duration-200 hover:bg-muted/50"
+                >
+                  <TableCell className="font-medium">
+                    <Link 
+                      to={`/compare?procedure=${encodeURIComponent(item.name)}`}
+                      className="text-primary hover:underline"
+                    >
+                      {item.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{item.facility}</TableCell>
-                  <TableCell>${item.price.toLocaleString()}</TableCell>
-                  <TableCell>
-                    {new Date(item.viewedAt).toLocaleDateString()}
+                  <TableCell className="text-right">
+                    ${item.price.toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/compare?procedure=${item.name}`}>
-                        View Again
-                      </Link>
-                    </Button>
+                    {formatTimestamp(item.viewedAt)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        asChild
+                      >
+                        <Link to={`/compare?procedure=${encodeURIComponent(item.name)}`}>
+                          Compare
+                        </Link>
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        size="sm"
+                        asChild
+                      >
+                        <Link to={`/facilities?procedure=${encodeURIComponent(item.name)}`}>
+                          View Facilities
+                        </Link>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
+              {mockRecentlyViewed.length === 0 && (
+                <TableRow>
+                  <TableCell 
+                    colSpan={5} 
+                    className="text-center text-muted-foreground"
+                  >
+                    No recently viewed procedures
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
