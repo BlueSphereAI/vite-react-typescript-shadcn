@@ -18,7 +18,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Bell, CheckCircle, Clock, Calendar, Info, AlertTriangle } from 'lucide-react'
+import { 
+  Bell, 
+  CheckCircle, 
+  Clock, 
+  Calendar, 
+  Info, 
+  AlertTriangle,
+  User,
+  History,
+  FileText,
+  Settings,
+  ChevronRight,
+} from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import {
   DropdownMenu,
@@ -62,6 +74,17 @@ interface BookingProgress {
   totalSteps: number
   nextAction: string
   dueDate: string
+}
+
+interface BookingStep {
+  step: number
+  title: string
+  description: string
+  status: 'completed' | 'current' | 'upcoming'
+  action?: {
+    label: string
+    link: string
+  }
 }
 
 const mockRecentlyViewed: RecentlyViewed[] = [
@@ -127,8 +150,62 @@ const mockBookingProgress: BookingProgress[] = [
   },
 ]
 
+const getBookingSteps = (currentStep: number): BookingStep[] => [
+  {
+    step: 1,
+    title: 'Initial Consultation',
+    description: 'Schedule and complete initial consultation',
+    status: currentStep > 1 ? 'completed' : currentStep === 1 ? 'current' : 'upcoming',
+    action: {
+      label: 'Schedule Consultation',
+      link: '/schedule-consultation'
+    }
+  },
+  {
+    step: 2,
+    title: 'Document Submission',
+    description: 'Upload required medical records and documents',
+    status: currentStep > 2 ? 'completed' : currentStep === 2 ? 'current' : 'upcoming',
+    action: {
+      label: 'Upload Documents',
+      link: '/upload-documents'
+    }
+  },
+  {
+    step: 3,
+    title: 'Travel Planning',
+    description: 'Plan travel arrangements and accommodation',
+    status: currentStep > 3 ? 'completed' : currentStep === 3 ? 'current' : 'upcoming',
+    action: {
+      label: 'Plan Travel',
+      link: '/travel-planning'
+    }
+  },
+  {
+    step: 4,
+    title: 'Pre-Procedure Check',
+    description: 'Complete pre-procedure requirements and checks',
+    status: currentStep > 4 ? 'completed' : currentStep === 4 ? 'current' : 'upcoming',
+    action: {
+      label: 'View Requirements',
+      link: '/pre-procedure'
+    }
+  },
+  {
+    step: 5,
+    title: 'Final Confirmation',
+    description: 'Confirm all arrangements and receive final instructions',
+    status: currentStep > 5 ? 'completed' : currentStep === 5 ? 'current' : 'upcoming',
+    action: {
+      label: 'Confirm Details',
+      link: '/confirm-booking'
+    }
+  },
+]
+
 const UserDashboard = () => {
   const [notifications, setNotifications] = useState(mockNotifications)
+  const [activeSection, setActiveSection] = useState('overview')
 
   const markAsRead = (id: string) => {
     setNotifications(prev =>
@@ -196,52 +273,98 @@ const UserDashboard = () => {
             Manage your medical travel journey
           </p>
         </div>
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="relative">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[300px]">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications.length > 0 ? (
-                <>
-                  {notifications.map((notification) => (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      className={!notification.read ? 'font-medium' : ''}
-                      onClick={() => markAsRead(notification.id)}
-                    >
-                      <div className="flex flex-col space-y-1">
-                        <span>{notification.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(notification.timestamp).toLocaleString()}
-                        </span>
-                      </div>
+        <div className="flex items-center gap-4">
+          <nav>
+            <ul className="flex items-center space-x-6">
+              <li>
+                <Button
+                  variant={activeSection === 'overview' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveSection('overview')}
+                >
+                  <FileText className="h-4 w-4" />
+                  Overview
+                </Button>
+              </li>
+              <li>
+                <Button
+                  variant={activeSection === 'profile' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveSection('profile')}
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Button>
+              </li>
+              <li>
+                <Button
+                  variant={activeSection === 'history' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveSection('history')}
+                >
+                  <History className="h-4 w-4" />
+                  History
+                </Button>
+              </li>
+              <li>
+                <Button
+                  variant={activeSection === 'settings' ? 'default' : 'ghost'}
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveSection('settings')}
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Button>
+              </li>
+            </ul>
+          </nav>
+          <div className="relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[300px]">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.length > 0 ? (
+                  <>
+                    {notifications.map((notification) => (
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className={!notification.read ? 'font-medium' : ''}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <div className="flex flex-col space-y-1">
+                          <span>{notification.title}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(notification.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={markAllAsRead}>
+                      Mark all as read
                     </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={markAllAsRead}>
-                    Mark all as read
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={clearAllNotifications}>
-                    Clear all notifications
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No new notifications
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <DropdownMenuItem onClick={clearAllNotifications}>
+                      Clear all notifications
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No new notifications
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -321,7 +444,7 @@ const UserDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Booking Progress with Steps */}
+      {/* Booking Progress with Detailed Steps */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Booking Progress</CardTitle>
@@ -329,51 +452,89 @@ const UserDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            {mockBookingProgress.map((booking) => (
-              <div key={booking.id} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold">{booking.procedure}</h4>
-                    <p className="text-sm text-muted-foreground">{booking.facility}</p>
+            {mockBookingProgress.map((booking) => {
+              const steps = getBookingSteps(booking.currentStep)
+              return (
+                <div key={booking.id} className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold">{booking.procedure}</h4>
+                      <p className="text-sm text-muted-foreground">{booking.facility}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{booking.nextAction}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Due by {new Date(booking.dueDate).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{booking.nextAction}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Due by {new Date(booking.dueDate).toLocaleDateString()}
-                    </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Overall Progress</span>
+                      <span className="font-medium">
+                        {Math.round((booking.currentStep / booking.totalSteps) * 100)}%
+                      </span>
+                    </div>
+                    <Progress
+                      value={(booking.currentStep / booking.totalSteps) * 100}
+                      className="h-2 transition-all duration-300"
+                    />
+                    <div className="mt-6 space-y-4">
+                      {steps.map((step) => (
+                        <div
+                          key={step.step}
+                          className={`flex items-start gap-4 rounded-lg border p-4 transition-colors duration-200 ${
+                            step.status === 'completed'
+                              ? 'border-green-200 bg-green-50'
+                              : step.status === 'current'
+                              ? 'border-blue-200 bg-blue-50'
+                              : 'border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium ${
+                              step.status === 'completed'
+                                ? 'border-green-500 bg-green-500 text-white'
+                                : step.status === 'current'
+                                ? 'border-blue-500 bg-blue-500 text-white'
+                                : 'border-gray-300 bg-white text-gray-500'
+                            }`}
+                          >
+                            {step.status === 'completed' ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              step.step
+                            )}
+                          </div>
+                          <div className="flex flex-1 items-center justify-between">
+                            <div>
+                              <h5 className="font-medium">{step.title}</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {step.description}
+                              </p>
+                            </div>
+                            {step.action && (step.status === 'current' || step.status === 'upcoming') && (
+                              <Button
+                                variant={step.status === 'current' ? 'default' : 'outline'}
+                                size="sm"
+                                className="ml-4"
+                                asChild
+                              >
+                                <Link to={step.action.link}>
+                                  {step.action.label}
+                                  <ChevronRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                  <Separator className="mt-4" />
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Progress</span>
-                    <span className="font-medium">
-                      {Math.round((booking.currentStep / booking.totalSteps) * 100)}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={(booking.currentStep / booking.totalSteps) * 100}
-                    className="h-2 transition-all duration-300"
-                  />
-                  <div className="flex justify-between">
-                    {Array.from({ length: booking.totalSteps }).map((_, index) => (
-                      <div
-                        key={index}
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition-colors duration-200 ${
-                          index < booking.currentStep
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : index === booking.currentStep
-                            ? 'border-primary bg-primary/20 text-primary'
-                            : 'border-muted bg-muted/20 text-muted-foreground'
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <Separator className="mt-4" />
-              </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>
