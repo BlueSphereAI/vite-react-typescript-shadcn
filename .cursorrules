@@ -3,6 +3,7 @@ Apply the following rules to the codebase
 
 ## Shadcn Rule
 1. You must use `npx shadcn@latest add <component-name>` to add new shadcn components. Never use `npx shadcn-ui@latest add <component-name>` because it is deprecated.
+2. A <Select.Item /> must have a value prop that is not an empty string. Use the state type from string instead of string | null. Set initial state values to 'all' instead of null. Add defaultValue="all" to the Select components. Remove the || undefined from the value props.
 
 ## EsLint Rule
 1. Make sure you fix all the linting errors and warnings.

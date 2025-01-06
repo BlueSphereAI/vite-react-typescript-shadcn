@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -33,13 +34,19 @@ interface Procedure {
   location: string
   facility: string
   credentials: string[]
+  type: string
 }
+
+type SortField = 'name' | 'usPrice' | 'internationalPrice' | 'travelCost' | 'location'
+type SortOrder = 'asc' | 'desc'
 
 const PriceComparison = () => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState('')
-  const [selectedType, setSelectedType] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<string>('all')
+  const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null)
+  const [sortField, setSortField] = useState<SortField>('name')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
 
   const procedures: Procedure[] = [
     {
@@ -51,6 +58,7 @@ const PriceComparison = () => {
       location: 'India',
       facility: 'Apollo Hospitals',
       credentials: ['JCI Accredited', 'ISO 9001:2015'],
+      type: 'orthopedic',
     },
     {
       id: '2',
@@ -61,35 +69,111 @@ const PriceComparison = () => {
       location: 'Thailand',
       facility: 'Bumrungrad International',
       credentials: ['JCI Accredited', 'HIMSS Stage 7'],
+      type: 'orthopedic',
+    },
+    {
+      id: '3',
+      name: 'Heart Bypass Surgery',
+      usPrice: 123000,
+      internationalPrice: 27000,
+      travelCost: 4000,
+      location: 'India',
+      facility: 'Fortis Hospital',
+      credentials: ['JCI Accredited', 'NABH Certified'],
+      type: 'cardiac',
+    },
+    {
+      id: '4',
+      name: 'Dental Implants',
+      usPrice: 4500,
+      internationalPrice: 1200,
+      travelCost: 2000,
+      location: 'Turkey',
+      facility: 'Memorial Hospital',
+      credentials: ['ISO 9001:2015', 'Turkish Medical Association'],
+      type: 'dental',
     },
   ]
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '↕'
+    return sortOrder === 'asc' ? '↑' : '↓'
+  }
+
+  const filteredAndSortedProcedures = procedures
+    .filter((procedure) => {
+      const matchesSearch = procedure.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+      const matchesLocation = !selectedLocation || selectedLocation === 'all' || procedure.location.toLowerCase() === selectedLocation
+      const matchesType = !selectedType || selectedType === 'all' || procedure.type === selectedType
+      return matchesSearch && matchesLocation && matchesType
+    })
+    .sort((a, b) => {
+      const multiplier = sortOrder === 'asc' ? 1 : -1
+      if (sortField === 'name' || sortField === 'location') {
+        return multiplier * a[sortField].localeCompare(b[sortField])
+      }
+      return multiplier * (a[sortField] - b[sortField])
+    })
 
   return (
     <div className="container py-8">
       <h1 className="mb-8 text-3xl font-bold">Compare Medical Procedure Prices</h1>
       
       <div className="mb-8 grid gap-4 md:grid-cols-4">
-        <Input
-          placeholder="Search procedures..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="md:col-span-2"
-        />
-        <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+        <div className="relative md:col-span-2">
+          <Input
+            placeholder="Search procedures..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-8"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+              onClick={() => setSearchQuery('')}
+            >
+              ✕
+            </Button>
+          )}
+        </div>
+        <Select 
+          defaultValue="all"
+          value={selectedLocation} 
+          onValueChange={setSelectedLocation}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select location" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
             <SelectItem value="india">India</SelectItem>
             <SelectItem value="thailand">Thailand</SelectItem>
             <SelectItem value="turkey">Turkey</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={selectedType} onValueChange={setSelectedType}>
+        <Select 
+          defaultValue="all"
+          value={selectedType} 
+          onValueChange={setSelectedType}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Procedure type" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="orthopedic">Orthopedic</SelectItem>
             <SelectItem value="cardiac">Cardiac</SelectItem>
             <SelectItem value="dental">Dental</SelectItem>
@@ -101,16 +185,41 @@ const PriceComparison = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Procedure</TableHead>
-              <TableHead className="text-right">US Price</TableHead>
-              <TableHead className="text-right">International Price</TableHead>
-              <TableHead className="text-right">Travel Cost</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => handleSort('name')}
+              >
+                Procedure {getSortIcon('name')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer text-right hover:bg-muted/50"
+                onClick={() => handleSort('usPrice')}
+              >
+                US Price {getSortIcon('usPrice')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer text-right hover:bg-muted/50"
+                onClick={() => handleSort('internationalPrice')}
+              >
+                International Price {getSortIcon('internationalPrice')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer text-right hover:bg-muted/50"
+                onClick={() => handleSort('travelCost')}
+              >
+                Travel Cost {getSortIcon('travelCost')}
+              </TableHead>
               <TableHead className="text-right">Total Cost</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => handleSort('location')}
+              >
+                Location {getSortIcon('location')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {procedures.map((procedure) => (
+            {filteredAndSortedProcedures.map((procedure) => (
               <TableRow
                 key={procedure.id}
                 className="cursor-pointer hover:bg-muted/50"
@@ -132,6 +241,13 @@ const PriceComparison = () => {
                 <TableCell>{procedure.location}</TableCell>
               </TableRow>
             ))}
+            {filteredAndSortedProcedures.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  No procedures found matching your criteria
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -164,7 +280,7 @@ const PriceComparison = () => {
                 <div>Travel Cost:</div>
                 <div>${selectedProcedure?.travelCost.toLocaleString()}</div>
                 <div className="font-semibold">Total Savings:</div>
-                <div className="font-semibold">
+                <div className="font-semibold text-green-600">
                   $
                   {selectedProcedure
                     ? (

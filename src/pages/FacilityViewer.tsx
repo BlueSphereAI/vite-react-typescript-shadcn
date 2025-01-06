@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,6 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { ChevronRight } from 'lucide-react'
 
 interface Review {
   id: string
@@ -34,59 +36,172 @@ interface Doctor {
   experience: string
 }
 
-const mockFacility = {
-  name: 'Apollo Hospitals',
-  location: 'Chennai, India',
-  image: 'https://example.com/apollo.jpg',
-  description:
-    'Apollo Hospitals is one of Asia\'s largest integrated healthcare organizations. We are committed to providing world-class healthcare services.',
-  certifications: [
-    'Joint Commission International (JCI) Accreditation',
-    'National Accreditation Board for Hospitals & Healthcare Providers (NABH)',
-    'ISO 9001:2015 Certification',
-  ],
-  doctors: [
-    {
-      id: '1',
-      name: 'Dr. Sarah Johnson',
-      specialization: 'Orthopedic Surgery',
-      qualifications: ['MBBS', 'MS (Ortho)', 'Fellowship in Joint Replacement'],
-      experience: '15+ years',
-    },
-    {
-      id: '2',
-      name: 'Dr. Michael Chen',
-      specialization: 'Cardiology',
-      qualifications: ['MBBS', 'MD (Cardiology)', 'Fellowship in Interventional Cardiology'],
-      experience: '12+ years',
-    },
-  ],
-  reviews: [
-    {
-      id: '1',
-      patientName: 'John D.',
-      rating: 5,
-      comment:
-        'Excellent care and attention throughout my knee replacement procedure. The staff was very professional and caring.',
-      date: '2023-12-15',
-    },
-    {
-      id: '2',
-      patientName: 'Maria S.',
-      rating: 4,
-      comment:
-        'Very good experience overall. Clean facilities and knowledgeable doctors. Would recommend to others.',
-      date: '2023-11-28',
-    },
-  ],
+const facilities = {
+  apollo: {
+    name: 'Apollo Hospitals',
+    location: 'Chennai, India',
+    image: 'https://example.com/apollo.jpg',
+    description:
+      'Apollo Hospitals is one of Asia\'s largest integrated healthcare organizations. We are committed to providing world-class healthcare services.',
+    certifications: [
+      'Joint Commission International (JCI) Accreditation',
+      'National Accreditation Board for Hospitals & Healthcare Providers (NABH)',
+      'ISO 9001:2015 Certification',
+    ],
+    doctors: [
+      {
+        id: '1',
+        name: 'Dr. Sarah Johnson',
+        specialization: 'Orthopedic Surgery',
+        qualifications: ['MBBS', 'MS (Ortho)', 'Fellowship in Joint Replacement'],
+        experience: '15+ years',
+      },
+      {
+        id: '2',
+        name: 'Dr. Michael Chen',
+        specialization: 'Cardiology',
+        qualifications: ['MBBS', 'MD (Cardiology)', 'Fellowship in Interventional Cardiology'],
+        experience: '12+ years',
+      },
+    ],
+    reviews: [
+      {
+        id: '1',
+        patientName: 'John D.',
+        rating: 5,
+        comment:
+          'Excellent care and attention throughout my knee replacement procedure. The staff was very professional and caring.',
+        date: '2023-12-15',
+      },
+      {
+        id: '2',
+        patientName: 'Maria S.',
+        rating: 4,
+        comment:
+          'Very good experience overall. Clean facilities and knowledgeable doctors. Would recommend to others.',
+        date: '2023-11-28',
+      },
+    ],
+  },
+  bumrungrad: {
+    name: 'Bumrungrad International',
+    location: 'Bangkok, Thailand',
+    image: 'https://example.com/bumrungrad.jpg',
+    description:
+      'Bumrungrad International Hospital is one of the largest private hospitals in Southeast Asia, with state-of-the-art facilities and world-class healthcare services.',
+    certifications: [
+      'Joint Commission International (JCI) Accreditation',
+      'Hospital Accreditation (HA)',
+      'ISO 9001:2015 Certification',
+    ],
+    doctors: [
+      {
+        id: '1',
+        name: 'Dr. David Wong',
+        specialization: 'Plastic Surgery',
+        qualifications: ['MBBS', 'MS (Plastic Surgery)', 'Fellowship in Aesthetic Surgery'],
+        experience: '18+ years',
+      },
+      {
+        id: '2',
+        name: 'Dr. Lisa Park',
+        specialization: 'Cardiology',
+        qualifications: ['MD', 'PhD', 'Fellowship in Interventional Cardiology'],
+        experience: '15+ years',
+      },
+    ],
+    reviews: [
+      {
+        id: '1',
+        patientName: 'Robert M.',
+        rating: 5,
+        comment:
+          'World-class facilities and exceptional care. The international patient services were outstanding.',
+        date: '2023-11-20',
+      },
+      {
+        id: '2',
+        patientName: 'Sarah K.',
+        rating: 5,
+        comment:
+          'Highly professional staff and modern facilities. The entire experience was smooth and comfortable.',
+        date: '2023-10-15',
+      },
+    ],
+  },
+  memorial: {
+    name: 'Memorial Hospital',
+    location: 'Istanbul, Turkey',
+    image: 'https://example.com/memorial.jpg',
+    description:
+      'Memorial Hospital Group is Turkey\'s leading healthcare provider, offering comprehensive medical services with cutting-edge technology.',
+    certifications: [
+      'Joint Commission International (JCI) Accreditation',
+      'ISO 9001:2015 Certification',
+      'Turkish Medical Association Accreditation',
+    ],
+    doctors: [
+      {
+        id: '1',
+        name: 'Dr. Ahmet Yilmaz',
+        specialization: 'Dental Surgery',
+        qualifications: ['DDS', 'PhD', 'Fellowship in Implantology'],
+        experience: '20+ years',
+      },
+      {
+        id: '2',
+        name: 'Dr. Ayse Kaya',
+        specialization: 'Ophthalmology',
+        qualifications: ['MD', 'Fellowship in LASIK Surgery'],
+        experience: '16+ years',
+      },
+    ],
+    reviews: [
+      {
+        id: '1',
+        patientName: 'James B.',
+        rating: 5,
+        comment:
+          'Excellent dental work at a fraction of the cost. The staff was very professional and caring.',
+        date: '2023-12-01',
+      },
+      {
+        id: '2',
+        patientName: 'Emma L.',
+        rating: 4,
+        comment:
+          'Great experience with LASIK surgery. The facility is modern and the doctors are highly skilled.',
+        date: '2023-11-10',
+      },
+    ],
+  },
 }
 
 const FacilityViewer = () => {
+  const { id } = useParams()
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
     message: '',
   })
+
+  const facility = facilities[id as keyof typeof facilities]
+
+  if (!facility) {
+    return (
+      <div className="container py-8">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold">Facility Not Found</h1>
+          <p className="mb-8 text-muted-foreground">
+            The facility you're looking for doesn't exist or has been removed.
+          </p>
+          <Button asChild>
+            <Link to="/facilities">Back to Facilities</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -97,22 +212,30 @@ const FacilityViewer = () => {
   return (
     <div className="container py-8">
       {/* Breadcrumb */}
-      <div className="mb-8 text-sm text-muted-foreground">
-        Home / Facilities / {mockFacility.name}
-      </div>
+      <nav className="mb-8 flex items-center space-x-2 text-sm text-muted-foreground">
+        <Link to="/" className="hover:text-foreground">
+          Home
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <Link to="/facilities" className="hover:text-foreground">
+          Facilities
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">{facility.name}</span>
+      </nav>
 
       {/* Facility Overview */}
       <div className="mb-12">
         <div className="mb-6 h-64 overflow-hidden rounded-lg bg-muted">
           <img
-            src={mockFacility.image}
-            alt={mockFacility.name}
+            src={facility.image}
+            alt={facility.name}
             className="h-full w-full object-cover"
           />
         </div>
-        <h1 className="mb-2 text-4xl font-bold">{mockFacility.name}</h1>
-        <p className="mb-4 text-xl text-muted-foreground">{mockFacility.location}</p>
-        <p className="max-w-3xl text-lg">{mockFacility.description}</p>
+        <h1 className="mb-2 text-4xl font-bold">{facility.name}</h1>
+        <p className="mb-4 text-xl text-muted-foreground">{facility.location}</p>
+        <p className="max-w-3xl text-lg">{facility.description}</p>
       </div>
 
       {/* Certifications */}
@@ -123,7 +246,7 @@ const FacilityViewer = () => {
         </CardHeader>
         <CardContent>
           <ul className="list-inside list-disc space-y-2">
-            {mockFacility.certifications.map((cert: string) => (
+            {facility.certifications.map((cert: string) => (
               <li key={cert}>{cert}</li>
             ))}
           </ul>
@@ -138,7 +261,7 @@ const FacilityViewer = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2">
-            {mockFacility.doctors.map((doctor: Doctor) => (
+            {facility.doctors.map((doctor: Doctor) => (
               <Card key={doctor.id}>
                 <CardHeader>
                   <CardTitle>{doctor.name}</CardTitle>
@@ -169,7 +292,7 @@ const FacilityViewer = () => {
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full">
-            {mockFacility.reviews.map((review: Review) => (
+            {facility.reviews.map((review: Review) => (
               <AccordionItem key={review.id} value={review.id}>
                 <AccordionTrigger>
                   <div className="flex items-center">
