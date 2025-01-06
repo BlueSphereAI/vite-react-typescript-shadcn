@@ -18,7 +18,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Bell } from 'lucide-react'
+import { Bell, CheckCircle, Clock, Calendar } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface RecentlyViewed {
   id: string
@@ -41,6 +50,16 @@ interface Notification {
   type: 'info' | 'success' | 'warning'
   timestamp: string
   read: boolean
+}
+
+interface BookingProgress {
+  id: string
+  procedure: string
+  facility: string
+  currentStep: number
+  totalSteps: number
+  nextAction: string
+  dueDate: string
 }
 
 const mockRecentlyViewed: RecentlyViewed[] = [
@@ -85,6 +104,27 @@ const mockNotifications: Notification[] = [
   },
 ]
 
+const mockBookingProgress: BookingProgress[] = [
+  {
+    id: 'BK001',
+    procedure: 'Hip Replacement',
+    facility: 'Apollo Hospitals',
+    currentStep: 3,
+    totalSteps: 5,
+    nextAction: 'Upload medical records',
+    dueDate: '2024-02-01',
+  },
+  {
+    id: 'BK002',
+    procedure: 'Dental Implants',
+    facility: 'Memorial Hospital',
+    currentStep: 2,
+    totalSteps: 4,
+    nextAction: 'Schedule consultation',
+    dueDate: '2024-02-15',
+  },
+]
+
 const UserDashboard = () => {
   const [notifications, setNotifications] = useState(mockNotifications)
 
@@ -94,6 +134,16 @@ const UserDashboard = () => {
         notif.id === id ? { ...notif, read: true } : notif
       )
     )
+  }
+
+  const markAllAsRead = () => {
+    setNotifications(prev =>
+      prev.map(notif => ({ ...notif, read: true }))
+    )
+  }
+
+  const clearAllNotifications = () => {
+    setNotifications([])
   }
 
   const getNotificationStyles = (type: Notification['type']) => {
@@ -119,14 +169,51 @@ const UserDashboard = () => {
           </p>
         </div>
         <div className="relative">
-          <Button variant="outline" className="relative">
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                {unreadCount}
-              </span>
-            )}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[300px]">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length > 0 ? (
+                <>
+                  {notifications.map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className={!notification.read ? 'font-medium' : ''}
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex flex-col space-y-1">
+                        <span>{notification.title}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(notification.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={markAllAsRead}>
+                    Mark all as read
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={clearAllNotifications}>
+                    Clear all notifications
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No new notifications
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -135,19 +222,59 @@ const UserDashboard = () => {
         {mockBookingStatus.map((status) => (
           <Card key={status.status}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">{status.status}</CardTitle>
+              <CardTitle className="flex items-center text-lg">
+                {status.status === 'Pending' && <Clock className="mr-2 h-5 w-5 text-yellow-500" />}
+                {status.status === 'Confirmed' && <Calendar className="mr-2 h-5 w-5 text-green-500" />}
+                {status.status === 'Completed' && <CheckCircle className="mr-2 h-5 w-5 text-blue-500" />}
+                {status.status}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-bold">{status.count}</span>
-                <div className="h-2 w-24">
-                  <div className={`h-full w-full rounded-full ${status.color}`} />
-                </div>
+                <Progress value={(status.count / 6) * 100} className="h-2 w-24" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Booking Progress */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Booking Progress</CardTitle>
+          <CardDescription>Track your ongoing medical travel arrangements</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {mockBookingProgress.map((booking) => (
+              <div key={booking.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold">{booking.procedure}</h4>
+                    <p className="text-sm text-muted-foreground">{booking.facility}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{booking.nextAction}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Due by {new Date(booking.dueDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Progress
+                    value={(booking.currentStep / booking.totalSteps) * 100}
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Step {booking.currentStep} of {booking.totalSteps}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recently Viewed */}
       <Card className="mb-8">
