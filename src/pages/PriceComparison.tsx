@@ -24,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { BarChart } from '@/components/ui/bar-chart'
 
 interface Procedure {
   id: string
@@ -37,7 +39,7 @@ interface Procedure {
   type: string
 }
 
-type SortField = 'name' | 'usPrice' | 'internationalPrice' | 'travelCost' | 'location'
+type SortField = 'name' | 'usPrice' | 'internationalPrice' | 'travelCost' | 'location' | 'savings'
 type SortOrder = 'asc' | 'desc'
 
 const PriceComparison = () => {
@@ -45,8 +47,8 @@ const PriceComparison = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<string>('all')
   const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null)
-  const [sortField, setSortField] = useState<SortField>('name')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+  const [sortField, setSortField] = useState<SortField>('savings')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
   const procedures: Procedure[] = [
     {
@@ -109,6 +111,13 @@ const PriceComparison = () => {
     return sortOrder === 'asc' ? '↑' : '↓'
   }
 
+  const calculateSavings = (procedure: Procedure) => {
+    const totalCost = procedure.internationalPrice + procedure.travelCost
+    const savings = procedure.usPrice - totalCost
+    const percentage = (savings / procedure.usPrice) * 100
+    return { amount: savings, percentage }
+  }
+
   const filteredAndSortedProcedures = procedures
     .filter((procedure) => {
       const matchesSearch = procedure.name
@@ -120,11 +129,23 @@ const PriceComparison = () => {
     })
     .sort((a, b) => {
       const multiplier = sortOrder === 'asc' ? 1 : -1
+      if (sortField === 'savings') {
+        const savingsA = calculateSavings(a).amount
+        const savingsB = calculateSavings(b).amount
+        return multiplier * (savingsA - savingsB)
+      }
       if (sortField === 'name' || sortField === 'location') {
         return multiplier * a[sortField].localeCompare(b[sortField])
       }
       return multiplier * (a[sortField] - b[sortField])
     })
+
+  const chartData = filteredAndSortedProcedures.map(procedure => ({
+    name: procedure.name,
+    'US Cost': procedure.usPrice,
+    'International Cost': procedure.internationalPrice + procedure.travelCost,
+    Savings: procedure.usPrice - (procedure.internationalPrice + procedure.travelCost)
+  }))
 
   return (
     <div className="container py-8">
@@ -181,6 +202,13 @@ const PriceComparison = () => {
         </Select>
       </div>
 
+      <div className="mb-8 rounded-lg border bg-card p-6">
+        <h2 className="mb-4 text-xl font-semibold">Cost Comparison Overview</h2>
+        <div className="h-[300px]">
+          <BarChart data={chartData} />
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -216,34 +244,51 @@ const PriceComparison = () => {
               >
                 Location {getSortIcon('location')}
               </TableHead>
+              <TableHead
+                className="cursor-pointer text-right hover:bg-muted/50"
+                onClick={() => handleSort('savings')}
+              >
+                Savings {getSortIcon('savings')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedProcedures.map((procedure) => (
-              <TableRow
-                key={procedure.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => setSelectedProcedure(procedure)}
-              >
-                <TableCell className="font-medium">{procedure.name}</TableCell>
-                <TableCell className="text-right">
-                  ${procedure.usPrice.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  ${procedure.internationalPrice.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  ${procedure.travelCost.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  ${(procedure.internationalPrice + procedure.travelCost).toLocaleString()}
-                </TableCell>
-                <TableCell>{procedure.location}</TableCell>
-              </TableRow>
-            ))}
+            {filteredAndSortedProcedures.map((procedure) => {
+              const { amount: savings, percentage } = calculateSavings(procedure)
+              return (
+                <TableRow
+                  key={procedure.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedProcedure(procedure)}
+                >
+                  <TableCell className="font-medium">{procedure.name}</TableCell>
+                  <TableCell className="text-right">
+                    ${procedure.usPrice.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${procedure.internationalPrice.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${procedure.travelCost.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${(procedure.internationalPrice + procedure.travelCost).toLocaleString()}
+                  </TableCell>
+                  <TableCell>{procedure.location}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1 text-right">
+                      <div className="text-green-600">
+                        ${savings.toLocaleString()} ({percentage.toFixed(1)}%)
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
             {filteredAndSortedProcedures.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                   No procedures found matching your criteria
                 </TableCell>
               </TableRow>
@@ -288,9 +333,40 @@ const PriceComparison = () => {
                         (selectedProcedure.internationalPrice + selectedProcedure.travelCost)
                       ).toLocaleString()
                     : 0}
+                  {selectedProcedure && (
+                    <span className="ml-1">
+                      (
+                      {(
+                        ((selectedProcedure.usPrice -
+                          (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
+                          selectedProcedure.usPrice) *
+                        100
+                      ).toFixed(1)}
+                      %)
+                    </span>
+                  )}
                 </div>
               </div>
+              <div className="mt-4">
+                <Progress 
+                  value={
+                    selectedProcedure
+                      ? ((selectedProcedure.usPrice -
+                          (selectedProcedure.internationalPrice + selectedProcedure.travelCost)) /
+                          selectedProcedure.usPrice) *
+                        100
+                      : 0
+                  } 
+                  className="h-2" 
+                />
+              </div>
             </div>
+            <Button
+              className="mt-2"
+              onClick={() => window.open(`/facilities/${selectedProcedure?.facility.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+            >
+              View Facility Details
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

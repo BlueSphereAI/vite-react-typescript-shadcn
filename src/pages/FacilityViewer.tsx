@@ -19,6 +19,14 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { ChevronRight } from 'lucide-react'
+import { MapView } from '@/components/ui/map-view'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
 
 interface Review {
   id: string
@@ -40,7 +48,12 @@ const facilities = {
   apollo: {
     name: 'Apollo Hospitals',
     location: 'Chennai, India',
-    image: 'https://example.com/apollo.jpg',
+    coordinates: { lat: 13.0827, lng: 80.2707 },
+    images: [
+      'https://example.com/apollo-1.jpg',
+      'https://example.com/apollo-2.jpg',
+      'https://example.com/apollo-3.jpg',
+    ],
     description:
       'Apollo Hospitals is one of Asia\'s largest integrated healthcare organizations. We are committed to providing world-class healthcare services.',
     certifications: [
@@ -86,7 +99,12 @@ const facilities = {
   bumrungrad: {
     name: 'Bumrungrad International',
     location: 'Bangkok, Thailand',
-    image: 'https://example.com/bumrungrad.jpg',
+    coordinates: { lat: 13.7437, lng: 100.5548 },
+    images: [
+      'https://example.com/bumrungrad-1.jpg',
+      'https://example.com/bumrungrad-2.jpg',
+      'https://example.com/bumrungrad-3.jpg',
+    ],
     description:
       'Bumrungrad International Hospital is one of the largest private hospitals in Southeast Asia, with state-of-the-art facilities and world-class healthcare services.',
     certifications: [
@@ -132,7 +150,12 @@ const facilities = {
   memorial: {
     name: 'Memorial Hospital',
     location: 'Istanbul, Turkey',
-    image: 'https://example.com/memorial.jpg',
+    coordinates: { lat: 41.0082, lng: 28.9784 },
+    images: [
+      'https://example.com/memorial-1.jpg',
+      'https://example.com/memorial-2.jpg',
+      'https://example.com/memorial-3.jpg',
+    ],
     description:
       'Memorial Hospital Group is Turkey\'s leading healthcare provider, offering comprehensive medical services with cutting-edge technology.',
     certifications: [
@@ -226,17 +249,43 @@ const FacilityViewer = () => {
 
       {/* Facility Overview */}
       <div className="mb-12">
-        <div className="mb-6 h-64 overflow-hidden rounded-lg bg-muted">
-          <img
-            src={facility.image}
-            alt={facility.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
+        <Carousel className="mb-6">
+          <CarouselContent>
+            {facility.images.map((image, index) => (
+              <CarouselItem key={index}>
+                <div className="aspect-video overflow-hidden rounded-lg">
+                  <img
+                    src={image}
+                    alt={`${facility.name} - View ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
         <h1 className="mb-2 text-4xl font-bold">{facility.name}</h1>
         <p className="mb-4 text-xl text-muted-foreground">{facility.location}</p>
         <p className="max-w-3xl text-lg">{facility.description}</p>
       </div>
+
+      {/* Location Map */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Location</CardTitle>
+          <CardDescription>Find us here</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MapView
+            latitude={facility.coordinates.lat}
+            longitude={facility.coordinates.lng}
+            name={facility.name}
+            address={facility.location}
+          />
+        </CardContent>
+      </Card>
 
       {/* Certifications */}
       <Card className="mb-8">
