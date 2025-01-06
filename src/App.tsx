@@ -1,13 +1,12 @@
 'use client'
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Layout from './components/layout/Layout'
-import Home from './pages/Home'
-import PriceComparison from './pages/PriceComparison'
-import FacilityViewer from './pages/FacilityViewer'
-import TravelExpense from './pages/TravelExpense'
-import Support from './pages/Support'
-import Dashboard from './pages/Dashboard'
+import Layout from '@/components/layout/Layout'
+import Home from '@/pages/Home'
+import PriceComparison from '@/pages/PriceComparison'
+import FacilityViewer from '@/pages/FacilityViewer'
+import TravelEstimation from '@/pages/TravelEstimation'
+import BookingManagement from '@/pages/BookingManagement'
 
 function App() {
   return (
@@ -17,9 +16,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/compare" element={<PriceComparison />} />
           <Route path="/facilities" element={<FacilityViewer />} />
-          <Route path="/travel" element={<TravelExpense />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/travel" element={<TravelEstimation />} />
+          <Route path="/bookings" element={<BookingManagement />} />
         </Routes>
       </Layout>
     </Router>
