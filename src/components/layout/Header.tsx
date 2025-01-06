@@ -58,6 +58,14 @@ const Header = () => {
               </Link>
             </li>
             <li>
+              <Link
+                to="/dashboard"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Dashboard
+              </Link>
+            </li>
+            <li>
               <Button asChild>
                 <Link to="/compare">Get Started</Link>
               </Button>

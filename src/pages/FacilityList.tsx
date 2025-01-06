@@ -130,9 +130,9 @@ const FacilityList = () => {
           )}
         </div>
         <Select 
-          defaultValue="all"
-          value={selectedSpecialty} 
+          value={selectedSpecialty}
           onValueChange={setSelectedSpecialty}
+          defaultValue="all"
         >
           <SelectTrigger>
             <SelectValue placeholder="Select specialty" />
@@ -147,9 +147,9 @@ const FacilityList = () => {
           </SelectContent>
         </Select>
         <Select 
-          defaultValue="all"
-          value={selectedLocation} 
+          value={selectedLocation}
           onValueChange={setSelectedLocation}
+          defaultValue="all"
         >
           <SelectTrigger>
             <SelectValue placeholder="Select country" />
