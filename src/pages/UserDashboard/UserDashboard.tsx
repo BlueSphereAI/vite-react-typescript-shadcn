@@ -1,8 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
+import { Bell, CheckCircle, Clock, Calendar } from 'lucide-react'
 
 interface RecentlyViewed {
   id: string
@@ -93,7 +97,45 @@ const mockBookingProgress: BookingProgress[] = [
   }
 ]
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Pending':
+      return 'text-yellow-500'
+    case 'Confirmed':
+      return 'text-green-500'
+    case 'Completed':
+      return 'text-blue-500'
+    default:
+      return 'text-gray-500'
+  }
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'Pending':
+      return <Clock className="h-4 w-4" />
+    case 'Confirmed':
+      return <Calendar className="h-4 w-4" />
+    case 'Completed':
+      return <CheckCircle className="h-4 w-4" />
+    default:
+      return null
+  }
+}
+
 export const UserDashboard = () => {
+  const [notifications, setNotifications] = useState(mockNotifications)
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: !notification.read }
+          : notification
+      )
+    )
+  }
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
@@ -104,8 +146,13 @@ export const UserDashboard = () => {
           <Card key={status.status}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{status.status}</span>
-                <Badge className={`bg-${status.color}-500`}>{status.count}</Badge>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(status.status)}
+                  <span>{status.status}</span>
+                </div>
+                <Badge className={getStatusColor(status.status)}>
+                  {status.count}
+                </Badge>
               </CardTitle>
             </CardHeader>
           </Card>
@@ -123,7 +170,12 @@ export const UserDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Progress value={(booking.currentStep / booking.totalSteps) * 100} />
+                <div className="flex items-center gap-2">
+                  <Progress value={(booking.currentStep / booking.totalSteps) * 100} />
+                  <span className="text-sm font-medium">
+                    Step {booking.currentStep} of {booking.totalSteps}
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Next Action: {booking.nextAction}</span>
                   <span>Due: {booking.dueDate}</span>
@@ -145,10 +197,17 @@ export const UserDashboard = () => {
                 <CardDescription>{item.facility}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-semibold">${item.price.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">
-                  Viewed: {new Date(item.viewedAt).toLocaleDateString()}
-                </p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-lg font-semibold">${item.price.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Viewed: {new Date(item.viewedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button variant="outline" asChild>
+                    <Link to={`/procedures/${item.id}`}>View Details</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -159,14 +218,29 @@ export const UserDashboard = () => {
       <div>
         <h2 className="text-2xl font-semibold mb-4">Notifications</h2>
         <div className="space-y-4">
-          {mockNotifications.map((notification) => (
-            <Card key={notification.id} className={notification.read ? 'opacity-60' : ''}>
+          {notifications.map((notification) => (
+            <Card 
+              key={notification.id} 
+              className={notification.read ? 'opacity-60' : ''}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{notification.title}</span>
-                  <Badge variant={notification.type === 'warning' ? 'destructive' : 'default'}>
-                    {notification.type}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    <span>{notification.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={notification.type === 'warning' ? 'destructive' : 'default'}>
+                      {notification.type}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleMarkAsRead(notification.id)}
+                    >
+                      Mark as {notification.read ? 'unread' : 'read'}
+                    </Button>
+                  </div>
                 </CardTitle>
                 <CardDescription>{notification.message}</CardDescription>
               </CardHeader>
