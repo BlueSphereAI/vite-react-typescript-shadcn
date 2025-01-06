@@ -28,6 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
 
 interface RecentlyViewed {
   id: string
@@ -239,16 +241,61 @@ const UserDashboard = () => {
         ))}
       </div>
 
-      {/* Booking Progress */}
+      {/* Notifications */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>Stay updated on your medical travel journey</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {notifications.map((notification) => (
+            <Alert
+              key={notification.id}
+              className={`${getNotificationStyles(notification.type)} transition-colors duration-200 hover:bg-opacity-75 ${
+                !notification.read ? 'border-l-4' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <AlertTitle className="text-sm font-semibold">
+                    {notification.title}
+                  </AlertTitle>
+                  <AlertDescription className="mt-1 text-sm">
+                    {notification.message}
+                  </AlertDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => markAsRead(notification.id)}
+                >
+                  {notification.read ? 'Read' : 'Mark as read'}
+                </Button>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                {new Date(notification.timestamp).toLocaleString()}
+              </div>
+            </Alert>
+          ))}
+          {notifications.length === 0 && (
+            <div className="text-center text-sm text-muted-foreground">
+              No notifications to display
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Booking Progress with Steps */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Booking Progress</CardTitle>
           <CardDescription>Track your ongoing medical travel arrangements</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {mockBookingProgress.map((booking) => (
-              <div key={booking.id} className="space-y-2">
+              <div key={booking.id} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-semibold">{booking.procedure}</h4>
@@ -261,15 +308,35 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Progress</span>
+                    <span className="font-medium">
+                      {Math.round((booking.currentStep / booking.totalSteps) * 100)}%
+                    </span>
+                  </div>
                   <Progress
                     value={(booking.currentStep / booking.totalSteps) * 100}
-                    className="h-2"
+                    className="h-2 transition-all duration-300"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Step {booking.currentStep} of {booking.totalSteps}
-                  </p>
+                  <div className="flex justify-between">
+                    {Array.from({ length: booking.totalSteps }).map((_, index) => (
+                      <div
+                        key={index}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-medium transition-colors duration-200 ${
+                          index < booking.currentStep
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : index === booking.currentStep
+                            ? 'border-primary bg-primary/20 text-primary'
+                            : 'border-muted bg-muted/20 text-muted-foreground'
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+                <Separator className="mt-4" />
               </div>
             ))}
           </div>
@@ -315,46 +382,6 @@ const UserDashboard = () => {
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>
-            Updates and alerts about your medical travel
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`rounded-lg border p-4 ${
-                  notification.read ? 'bg-background' : getNotificationStyles(notification.type)
-                }`}
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <h4 className="font-semibold">{notification.title}</h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => markAsRead(notification.id)}
-                    className={notification.read ? 'invisible' : ''}
-                  >
-                    Mark as read
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {notification.message}
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {new Date(notification.timestamp).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
