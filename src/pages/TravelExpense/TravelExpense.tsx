@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
@@ -28,7 +27,6 @@ interface ExpenseBreakdown {
 }
 
 export const TravelExpense = () => {
-  const location = useLocation()
   const [totalEstimate, setTotalEstimate] = useState<number | null>(null)
   const [breakdown, setBreakdown] = useState<ExpenseBreakdown[]>([])
   
