@@ -130,7 +130,16 @@ export const ProcedureDetail = () => {
                   <TableCell className="font-medium">{facility.name}</TableCell>
                   <TableCell>{facility.location}</TableCell>
                   <TableCell>${facility.procedureCost.toLocaleString()}</TableCell>
-                  <TableCell>${facility.travelCost.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      ${facility.travelCost.toLocaleString()}
+                      <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                        <Link to="/travel-expense" className="text-xs">
+                          Estimate
+                        </Link>
+                      </Button>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-bold">${facility.totalCost.toLocaleString()}</TableCell>
                   <TableCell>{facility.rating}/5</TableCell>
                   <TableCell>
