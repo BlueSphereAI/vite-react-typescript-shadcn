@@ -1,131 +1,149 @@
+# Project Overview
+
+MediGlobal Connect is a medical procedure price comparison platform tailored for individuals seeking cost-effective medical solutions. This application enables users to compare medical procedure costs between facilities in the US and internationally, factoring in travel expenses. The platform integrates medical cost data with credential reviews and travel logistics, establishing a unique solution that saves the consumer time and money.
+
 # Frontend Pages Details
 
-Here’s the detailed requirements documentation for each frontend page of the MediGlobal Connect platform:
+## Home Page
 
-## Home Page (`index.tsx`)
+### Key Elements
 
-### Elements
 - **Header**
-  - **Logo**: Image element displaying the company logo (`https://mediglobal-connect.greensphere.one/images/logo.jpg`) aligned to the left.
-  - **Company Name**: Text element displaying "MediGlobal Connect" next to the logo.
-  - **Navigation Menu**: A horizontal list of links to pages like Home, About Us, Services, Contact, etc.
-  
-- **Hero Section**
-  - **Title**: Large heading "Affordable Medical Procedures Worldwide".
-  - **Subtitle**: Text element "Compare prices & plan your medical journey."
-  - **Call to Action Button**: "Get Started" button leading to the comparison page.
+  - **Company Logo**: Image element linking to [MediGlobal Connect Logo](https://mediglobal-connect.greensphere.one/images/logo.jpg).
+    - **Position**: Top-left corner.
+    - **Action**: Click redirects to Home Page.
+  - **Company Name**: Text element "MediGlobal Connect" next to the logo.
+    - **Style**: Bold, within a header banner.
+  - **Navigation Links**: Text buttons for "Home", "Search Procedures", "Dashboard", "Contact Us".
+    - **Position**: Top-right corner.
+    - **Action**: Click navigates to respective pages.
 
-- **Introduction**
-  - **Text**: Brief description of the platform and how it benefits users.
-
-- **Benefits Section**
-  - **Icons with Text**: A series of 3-5 icons with descriptions showcasing unique platform benefits.
-
-- **Facility Spotlight**
-  - **Carousel/Slider**: Display a selection of featured international medical facilities with short descriptions and credentials.
-  
-- **Footer**
-  - **Quick Links**: Links to relevant pages and resources.
-  - **Social Media Icons**: Links to social media profiles.
-  - **Contact Information**: Email and phone number.
-
-### Actions
-- Clicking "Get Started" redirects to the Price Comparison Page.
-- Facilities in the Spotlight section, when clicked, expand or redirect to the Facility Viewer page.
-
-## Price Comparison Page
-
-### Elements
 - **Search Bar**
-  - **Input Field**: Text input for the medical procedure name or category.
-  - **Filter Options**: Dropdowns for location, procedure type, etc.
-  - **Search Button**: Button to execute the search.
+  - **Input Field**: Text input for procedure name.
+    - **Actions**: User types procedure name.
+    - **Use Case**: User searches for "knee replacement" and expects a list of matching procedures.
+  - **Search Button**: Click triggers search.
+    - **Style**: Prominent and adjacent to the input field.
+    - **Actions**: Click performs search operation.
+
+- **Featured Comparisons Section**
+  - **Comparison Cards**: Display several highlighted comparisons with images and quick facts.
+    - **Description**: Summary cards for popular procedures.
+    - **Action**: Click a card to explore more details.
+    - **Use Case**: Users view a card for hip replacement and clicks to see full comparison.
+
+### Footer
+
+- **Contact Information**: Text including address, email, and phone number.
+- **Social Media Icons**: Icon buttons linking to social media pages.
+- **Site Map Links**: Text links for key pages.
+
+## Procedure Detail Page `[id].tsx`
+
+### Key Elements
+
+- **Header**
+  - Repeats from Home Page: Uses the same header component for consistency.
+
+- **Breadcrumb Navigation**
+  - **Description**: Shows navigation path.
+  - **Use Case**: User sees "Home > Procedures > Knee Replacement"
+
+- **Procedure Information**
+  - **Title**: Display procedure name.
+  - **Description**: Detailed procedure explanation.
+  - **Image**: Related visual graphics.
 
 - **Price Comparison Table**
-  - **Table**: Displays procedure name, US price, international price, travel cost, total estimated cost.
-  - **Sort Options**: Sort by price, location, etc.
-  - **Expand Row/Modal**: View more details including travel itinerary mock-ups.
+  - **Table Elements**: Rows with details such as Facility Name, Location, Procedure Cost, Estimated Travel Cost.
+    - **Style**: Responsive and sortable columns.
+    - **Use Case**: User sorts by price and finds the cheapest option.
 
-- **Procedure Details Pop-Up**
-  - **Modal Window**: Shows expanded details of selected procedure and facility.
-  - **Credentials**: List of certifications and reviews.
-  - **Action Buttons**: Options to bookmark or simulate booking.
+- **Facility Credential Viewer**
+  - **Expandable Sections**: For facility certifications, reviews, and doctor qualifications.
+    - **Action**: Click to expand/collapse.
+    - **Use Case**: User expands credentials to read patient reviews.
 
-### Actions
-- Conduct searches and refine results using filters.
-- Sort and organize table data dynamically.
-- Open detailed modals by clicking rows.
+### Footer
 
-## Facility Credential Viewer Page
+- Mirrors the Home Page footer component.
 
-### Elements
-- **Breadcrumb Navigation**: Displays navigational path for easy backtracking.
+## Travel Expense Estimation Page
 
-- **Facility Overview**
-  - **Banner Image**: Facility-specific image header.
-  - **Facility Name and Location**: Prominent display at top.
+### Key Elements
 
-- **Credentials Section**
-  - **Certifications List**: Bullet list or grid of certifications.
-  - **Doctor Profiles**: Profiles detailing doctor qualifications and experience.
-  - **Patient Reviews**: Section with capability to expand/collapse individual reviews.
+- **Header**
+  - Reuse of standard company header.
 
-- **Contact and Inquiry**
-  - **Contact Form**: Form to send inquiries directly to facilities.
-  
-### Actions
-- Expanding or collapsing reviews.
-- Submitting inquiries via form.
+- **Estimation Form**
+  - **Input Elements**: For Flight, Accommodation, and Miscellaneous expenses.
+    - **Action**: User inputs custom cost estimates.
+    - **Use Case**: User inputs airfare cost and checks total estimation.
+  - **Estimate Button**: Triggers calculation.
+    - **Action**: Click generates estimated total expenses.
 
-## Travel and Expense Estimation Page
+- **Results Display**
+  - **Cost Breakdown**: Displays a breakdown of expenses.
+  - **Use Case**: Users verify budget feasibility for medical travel.
 
-### Elements
-- **Overview Section**
-  - **Text**: Explanation of how costs are estimated.
+### Footer
 
-- **Travel Expense Table**
-  - **Table**: Itemized list of travel expenses including flights, accommodation, and local transportation.
-  - **Options for Custom Inputs**: Adjust parameters for more personalized estimates.
+- Standard footer design for coherence.
 
-- **Graphical Representation**
-  - **Charts/Graphs**: Visual representation of expense breakdowns.
+## Booking Simulation Page
 
-### Actions
-- Interactive sliders or inputs to adjust cost parameters.
-- Download or print report options.
+### Key Elements
 
-## Booking Management and Support Simulation Page
+- **Header**
+  - Consistent company branding.
 
-### Elements
-- **Booking Simulation Section**
-  - **List of Procedures**: Display of selected/bookmarked procedures.
-  - **Simulation Button**: Initiate booking request simulation.
+- **Booking Request Form**
+  - **Inputs**: Patient's basic details, procedure, and date preference.
+    - **Action**: User fills form.
+    - **Use Case**: Users submit a booking request simulation.
 
-- **Chat Support**
-  - **Chat Window**: Simulated chat interface with scripted advisor interactions.
-  - **FAQ Integration**: Links to frequently asked questions or popular queries.
+- **Virtual Advisor Chat**
+  - **Chat Window**: Interactive chat interface.
+    - **Action**: Users ask questions, receive scripted advice.
+    - **Use Case**: Users confirm appointment logistics with the advisor.
 
-### Actions
-- Simulate booking interactions.
-- Engage with pre-scripted chat advisors.
+- **Booking Summary**
+  - **Summary Box**: Displays simulated booking details.
+  - **Action**: Review summary after completing steps.
+  - **Use Case**: User checks accuracy of booking info and confirms.
 
-## User Dashboard
+### Footer
 
-### Elements
-- **Dashboard Navigation**
-  - **Menu**: Sidebar or top navigation for accessing different sections like Profile, History, Booked Procedures.
+- Included as part of all pages.
 
-- **Recently Viewed & Booked Procedures**
-  - **List View**: Display of recently viewed items with quick access.
+## User Dashboard Page
 
-- **Booking Status Overview**
-  - **Cards or Tables**: Display ongoing or past booking simulations.
+### Key Elements
 
-- **Notifications**
-  - **Alerts/Badges**: Indicate messages or updates on interactions.
+- **Header**
+  - Unified header for user convenience.
 
-### Actions
-- Navigation between dashboard sections.
-- Review history and current procedures.
+- **Dashboard Overview**
+  - **Welcome Message**: Personalized greeting for logged-in users.
+  - **Notifications**: Alerts for new messages or updates.
 
-These detailed elements and functionalities are designed to create a cohesive and user-friendly experience on the MediGlobal Connect platform. The layout emphasizes ease of use, accessibility, and transparent information at every stage.
+- **Procedure List**
+  - **List Items**: Summary of previously viewed/comparable procedures.
+    - **Action**: Click list item for detailed view.
+    - **Use Case**: Users quickly navigate to review previous comparisons.
+
+- **Booking Status**
+  - **Status Card**: Displays pending and confirmed procedure bookings.
+    - **Action**: Filter by status.
+    - **Use Case**: Users identify which procedures need action.
+
+- **Advisor Interactions**
+  - **Interaction History**: List of previous chat logs with the advisor.
+    - **Description**: Organized by date for easy access.
+    - **Use Case**: User reviews past advice before making decisions.
+
+### Footer
+
+- The overall site footer.
+
+Each frontend page reflects the MediGlobal Connect branding through consistent use of logo and company name, whilst aligning design elements for intuitive user experiences. Each page is designed to smoothly transition between the core functionalities, empowering users with data and tools to navigate the complex process of international medical travel and procedures.
