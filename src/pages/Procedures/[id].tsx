@@ -10,16 +10,15 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { proceduresApi, facilitiesApi, priceComparisonsApi } from "@/lib/api"
-import { cn } from "@/lib/utils"
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
   description: string
 }
 
 interface Facility {
-  facility_id: string
+  uuid: string
   name: string
   location: string
   certifications: string
@@ -28,7 +27,7 @@ interface Facility {
 }
 
 interface PriceComparison {
-  comparison_id: string
+  uuid: string
   procedure_id: string
   facility_id: string
   us_price: number
@@ -61,8 +60,8 @@ export const ProcedureDetail = () => {
         if (comparisonsRes.error) throw new Error(comparisonsRes.error)
 
         setProcedure(procedureRes.data)
-        setFacilities(facilitiesRes.data)
-        setPriceComparisons(comparisonsRes.data.filter(c => c.procedure_id === id))
+        setFacilities(facilitiesRes.data || [])
+        setPriceComparisons(comparisonsRes.data?.filter(c => c.procedure_id === id) || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data')
       } finally {
@@ -102,7 +101,7 @@ export const ProcedureDetail = () => {
   }
 
   const getFacilityById = (facilityId: string) => 
-    facilities.find(f => f.facility_id === facilityId)
+    facilities.find(f => f.uuid === facilityId)
 
   const calculateSavings = (comparison: PriceComparison) => {
     const savings = comparison.us_price - (comparison.international_price + comparison.travel_cost)
@@ -129,13 +128,9 @@ export const ProcedureDetail = () => {
             {procedure.description}
           </p>
           <img 
-            src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.procedure_id}.jpg`}
+            src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.uuid}.jpg`}
             alt={procedure.name}
             className="w-full rounded-lg mb-6 h-[300px] object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement
-              target.src = "https://mediglobal-connect.greensphere.one/images/procedures/default.jpg"
-            }}
           />
         </div>
         <div className="bg-primary/5 p-6 rounded-lg h-fit">
@@ -160,7 +155,10 @@ export const ProcedureDetail = () => {
             <div>
               <dt className="text-sm text-muted-foreground">Locations</dt>
               <dd className="font-semibold">
-                {Array.from(new Set(facilities.map(f => f.location.split(',')[1].trim()))).join(', ')}
+                {Array.from(new Set(facilities.map(f => {
+                  const parts = f.location.split(',')
+                  return parts[1]?.trim() || parts[0]?.trim() || f.location
+                }))).join(', ')}
               </dd>
             </div>
           </dl>
@@ -192,7 +190,7 @@ export const ProcedureDetail = () => {
                 const totalCost = comparison.international_price + comparison.travel_cost
 
                 return (
-                  <TableRow key={comparison.comparison_id}>
+                  <TableRow key={comparison.uuid}>
                     <TableCell className="font-medium">{facility.name}</TableCell>
                     <TableCell>{facility.location}</TableCell>
                     <TableCell>${comparison.international_price.toLocaleString()}</TableCell>
@@ -226,16 +224,16 @@ export const ProcedureDetail = () => {
       {/* Facility Credentials */}
       <div className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Facility Credentials</h2>
-        <Tabs defaultValue={facilities[0]?.facility_id}>
+        <Tabs defaultValue={facilities[0]?.uuid}>
           <TabsList className="mb-4">
             {facilities.map((facility) => (
-              <TabsTrigger key={facility.facility_id} value={facility.facility_id}>
+              <TabsTrigger key={facility.uuid} value={facility.uuid}>
                 {facility.name}
               </TabsTrigger>
             ))}
           </TabsList>
           {facilities.map((facility) => (
-            <TabsContent key={facility.facility_id} value={facility.facility_id}>
+            <TabsContent key={facility.uuid} value={facility.uuid}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>

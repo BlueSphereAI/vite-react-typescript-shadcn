@@ -64,7 +64,7 @@ export const proceduresApi = {
     }
   },
 
-  create: async (data: Omit<Procedure, 'procedure_id'>): Promise<ApiResponse<Procedure>> => {
+  create: async (data: Omit<Procedure, 'uuid'>): Promise<ApiResponse<Procedure>> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/procedures`, {
         method: 'POST',

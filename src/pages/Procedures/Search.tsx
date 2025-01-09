@@ -98,7 +98,10 @@ export const Search = () => {
 
   const getLocationsForProcedure = (procedureId: string) => {
     const procedureFacilities = getFacilitiesForProcedure(procedureId)
-    return Array.from(new Set(procedureFacilities.map(f => f.location.split(',')[1].trim())))
+    return Array.from(new Set(procedureFacilities.map(f => {
+      const parts = f.location.split(',')
+      return parts[1]?.trim() || parts[0]?.trim() || f.location
+    })))
   }
 
   if (loading) {

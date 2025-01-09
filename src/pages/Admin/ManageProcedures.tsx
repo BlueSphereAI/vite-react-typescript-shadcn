@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { proceduresApi } from "@/lib/api"
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
   description: string
 }
@@ -134,7 +134,7 @@ export const ManageProcedures = () => {
             </TableHeader>
             <TableBody>
               {procedures.map((procedure) => (
-                <TableRow key={procedure.procedure_id}>
+                <TableRow key={procedure.uuid}>
                   <TableCell className="font-medium">{procedure.name}</TableCell>
                   <TableCell>{procedure.description}</TableCell>
                   <TableCell>
@@ -142,7 +142,7 @@ export const ManageProcedures = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteProcedure(procedure.procedure_id)}
+                        onClick={() => handleDeleteProcedure(procedure.uuid)}
                       >
                         Delete
                       </Button>
