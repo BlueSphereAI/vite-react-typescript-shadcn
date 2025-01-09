@@ -36,7 +36,6 @@ export const ManagePriceComparisons = () => {
   const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>([])
   const [procedures, setProcedures] = useState<Procedure[]>([])
   const [facilities, setFacilities] = useState<Facility[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newComparison, setNewComparison] = useState({
     procedure_id: '',
@@ -48,7 +47,6 @@ export const ManagePriceComparisons = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true)
       const [comparisonsRes, proceduresRes, facilitiesRes] = await Promise.all([
         priceComparisonsApi.getAll(),
         proceduresApi.getAll(),
@@ -64,8 +62,6 @@ export const ManagePriceComparisons = () => {
       setFacilities(facilitiesRes.data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
-    } finally {
-      setLoading(false)
     }
   }
 

@@ -10,9 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { facilitiesApi } from "@/lib/api"
+import { generateUUID } from '@/lib/utils'
 
 interface Facility {
-  facility_id: string
+  uuid: string
   name: string
   location: string
   certifications: string
@@ -22,7 +23,6 @@ interface Facility {
 
 export const ManageFacilities = () => {
   const [facilities, setFacilities] = useState<Facility[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newFacility, setNewFacility] = useState({
     name: '',
@@ -34,14 +34,11 @@ export const ManageFacilities = () => {
 
   const fetchFacilities = async () => {
     try {
-      setLoading(true)
       const response = await facilitiesApi.getAll()
       if (response.error) throw new Error(response.error)
       setFacilities(response.data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch facilities')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -56,7 +53,10 @@ export const ManageFacilities = () => {
         return
       }
 
-      const response = await facilitiesApi.create(newFacility)
+      const response = await facilitiesApi.create({
+        ...newFacility,
+        uuid: generateUUID()
+      })
       if (response.error) throw new Error(response.error)
 
       // Reset form and refresh list
@@ -174,7 +174,7 @@ export const ManageFacilities = () => {
             </TableHeader>
             <TableBody>
               {facilities.map((facility) => (
-                <TableRow key={facility.facility_id}>
+                <TableRow key={facility.uuid}>
                   <TableCell className="font-medium">{facility.name}</TableCell>
                   <TableCell>{facility.location}</TableCell>
                   <TableCell>{facility.certifications}</TableCell>
@@ -183,7 +183,7 @@ export const ManageFacilities = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteFacility(facility.facility_id)}
+                        onClick={() => handleDeleteFacility(facility.uuid)}
                       >
                         Delete
                       </Button>

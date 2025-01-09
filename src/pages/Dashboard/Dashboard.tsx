@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
-import { Bell, Calendar, MessageSquare } from "lucide-react"
+import { Bell, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { bookingsApi, proceduresApi } from "@/lib/api"
 
@@ -19,8 +19,7 @@ interface Booking {
   facility_id: string
   procedure_id: string
   itinerary: string
-  status: 'pending' | 'confirmed' | 'completed'
-  preferred_date: string
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed'
 }
 
 interface Procedure {
@@ -104,11 +103,11 @@ export const Dashboard = () => {
 
   const getStatusColor = (status: Booking['status']) => {
     switch (status) {
-      case 'pending':
+      case 'Pending':
         return 'text-yellow-500 border-yellow-500'
-      case 'confirmed':
+      case 'Confirmed':
         return 'text-green-500 border-green-500'
-      case 'completed':
+      case 'Completed':
         return 'text-blue-500 border-blue-500'
       default:
         return 'text-gray-500 border-gray-500'
@@ -233,7 +232,7 @@ export const Dashboard = () => {
                 {bookings.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No procedures booked yet. 
-                    <Link to="/procedures/search" className="text-primary hover:underline ml-1">
+                    <Link to="/procedures" className="text-primary hover:underline ml-1">
                       Browse available procedures
                     </Link>
                   </div>
@@ -258,10 +257,6 @@ export const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">
                           {booking.itinerary}
                         </p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(booking.preferred_date), "MMM d, yyyy")}
-                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" asChild>
@@ -269,7 +264,7 @@ export const Dashboard = () => {
                             View Details
                           </Link>
                         </Button>
-                        {booking.status === 'pending' && (
+                        {booking.status === 'Pending' && (
                           <Button variant="default" size="sm">
                             Confirm Booking
                           </Button>
@@ -313,7 +308,6 @@ export const Dashboard = () => {
                         {booking.itinerary}
                       </p>
                       <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>{format(new Date(booking.preferred_date), "MMM d, yyyy")}</span>
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/procedures/${booking.procedure_id}`}>
                             View Details

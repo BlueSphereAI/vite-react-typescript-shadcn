@@ -1,143 +1,100 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { proceduresApi, bookingsApi } from "@/lib/api"
-
-interface ChatMessage {
-  id: string
-  sender: 'user' | 'advisor'
-  message: string
-  timestamp: Date
-}
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { proceduresApi, facilitiesApi, bookingsApi } from "@/lib/api"
+import { generateUUID } from '@/lib/utils'
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
   description: string
 }
 
-interface BookingDetails {
+interface Facility {
+  uuid: string
   name: string
-  email: string
-  phone: string
-  procedure_id: string
-  preferred_date: Date | null
-  special_requirements: string
-  status: 'pending'
+  location: string
+  certifications: string
+  doctor_info: string
+  patient_reviews: string
 }
 
 export const Booking = () => {
-  const { id } = useParams()
+  const { id: procedureId } = useParams()
   const navigate = useNavigate()
-  const [date, setDate] = useState<Date>()
-  const [procedure, setProcedure] = useState<Procedure | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: 'advisor',
-      message: 'Hello! I\'m your virtual advisor. How can I help you with your medical travel booking today?',
-      timestamp: new Date()
-    }
-  ])
-  const [newMessage, setNewMessage] = useState('')
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails>({
-    name: '',
-    email: '',
-    phone: '',
-    procedure_id: id || '',
-    preferred_date: null,
-    special_requirements: '',
-    status: 'pending'
+  const [error, setError] = useState<string | null>(null)
+  const [procedure, setProcedure] = useState<Procedure | null>(null)
+  const [facility, setFacility] = useState<Facility | null>(null)
+
+  const [bookingData, setBookingData] = useState({
+    itinerary: ''
   })
 
   useEffect(() => {
-    const fetchProcedure = async () => {
-      if (!id) return
+    const fetchData = async () => {
+      if (!procedureId) return
 
       try {
         setLoading(true)
-        const response = await proceduresApi.getById(id)
-        if (response.error) throw new Error(response.error)
-        setProcedure(response.data)
+        const procedureRes = await proceduresApi.getById(procedureId)
+        if (procedureRes.error) throw new Error(procedureRes.error)
+        setProcedure(procedureRes.data)
+
+        // For now, we'll just get the first facility. In a real app, you'd get the selected facility.
+        const facilitiesRes = await facilitiesApi.getAll()
+        if (facilitiesRes.error) throw new Error(facilitiesRes.error)
+        setFacility(facilitiesRes.data?.[0] || null)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch procedure details')
+        setError(err instanceof Error ? err.message : 'Failed to fetch data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchProcedure()
-  }, [id])
+    fetchData()
+  }, [procedureId])
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return
-
-    // Add user message
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      message: newMessage,
-      timestamp: new Date()
-    }
-    
-    setChatMessages(prev => [...prev, userMessage])
-    setNewMessage('')
-
-    // Simulate advisor response
-    setTimeout(() => {
-      const advisorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'advisor',
-        message: 'I understand your query. Let me help you with that. Please fill out the booking form with your details, and I\'ll assist you further.',
-        timestamp: new Date()
-      }
-      setChatMessages(prev => [...prev, advisorMessage])
-    }, 1000)
+  const handleInputChange = (field: keyof typeof bookingData, value: string) => {
+    setBookingData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!date || !procedure) return
+  const handleSubmit = async () => {
+    if (!procedureId || !facility) return
 
     try {
       setSubmitting(true)
+      setError(null)
+
+      if (!bookingData.itinerary.trim()) {
+        setError('Please provide your travel itinerary')
+        return
+      }
+
       const response = await bookingsApi.create({
-        ...bookingDetails,
-        preferred_date: date
+        uuid: generateUUID(),
+        user_id: generateUUID(), // In a real app, this would come from auth
+        procedure_id: procedureId,
+        facility_id: facility.uuid,
+        itinerary: bookingData.itinerary,
+        status: 'Pending'
       })
 
       if (response.error) throw new Error(response.error)
 
-      // Add success message to chat
-      const advisorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        sender: 'advisor',
-        message: 'Great! Your booking request has been submitted successfully. You can track its status in your dashboard.',
-        timestamp: new Date()
-      }
-      setChatMessages(prev => [...prev, advisorMessage])
-
-      // Navigate to dashboard after short delay
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+      // Redirect to dashboard on success
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit booking')
     } finally {
@@ -148,35 +105,29 @@ export const Booking = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {Array(5).fill(null).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-          <Skeleton className="h-[600px] w-full" />
-        </div>
+        <Card>
+          <CardHeader>
+            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-96 bg-muted animate-pulse rounded mt-2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {Array(3).fill(null).map((_, i) => (
+                <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
-  if (error || !procedure) {
+  if (error || !procedure || !facility) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
           <AlertDescription>
-            {error || 'Procedure not found'}
+            {error || 'Procedure or facility not found'}
           </AlertDescription>
         </Alert>
       </div>
@@ -191,208 +142,78 @@ export const Booking = () => {
         <span className="mx-2">/</span>
         <Link to="/procedures" className="hover:text-primary">Procedures</Link>
         <span className="mx-2">/</span>
-        <Link to={`/procedures/${id}`} className="hover:text-primary">{procedure.name}</Link>
+        <Link to={`/procedures/${procedureId}`} className="hover:text-primary">{procedure.name}</Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">Booking Simulation</span>
+        <span className="text-foreground">Book Procedure</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Booking Form */}
-        <div className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Request Form</CardTitle>
-              <CardDescription>
-                Fill in your details to simulate a booking request for {procedure.name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={bookingDetails.name}
-                    onChange={(e) => setBookingDetails(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="John Doe"
-                    required
-                  />
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Book {procedure.name}</CardTitle>
+          <CardDescription>
+            Complete the booking form to schedule your procedure at {facility.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={bookingDetails.email}
-                    onChange={(e) => setBookingDetails(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="john@example.com"
-                    required
-                  />
-                </div>
+          <div className="space-y-6 max-w-2xl mx-auto">
+            {/* Procedure Summary */}
+            <div className="space-y-4">
+              <h3 className="font-semibold">Procedure Details</h3>
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <p><span className="font-medium">Procedure:</span> {procedure.name}</p>
+                <p><span className="font-medium">Facility:</span> {facility.name}</p>
+                <p><span className="font-medium">Location:</span> {facility.location}</p>
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={bookingDetails.phone}
-                    onChange={(e) => setBookingDetails(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+1 (555) 000-0000"
-                    required
-                  />
-                </div>
+            <Separator />
 
-                <div className="space-y-2">
-                  <Label>Preferred Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+            {/* Booking Form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="itinerary">Travel Itinerary *</Label>
+                <Textarea
+                  id="itinerary"
+                  value={bookingData.itinerary}
+                  onChange={(e) => handleInputChange('itinerary', e.target.value)}
+                  placeholder="Please provide your travel plans and any special requirements..."
+                  className="min-h-[150px]"
+                />
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="requirements">Special Requirements</Label>
-                  <Textarea
-                    id="requirements"
-                    value={bookingDetails.special_requirements}
-                    onChange={(e) => setBookingDetails(prev => ({ ...prev, special_requirements: e.target.value }))}
-                    placeholder="Any special requirements or notes..."
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+            <div className="flex justify-between pt-6">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/procedures/${procedureId}`)}
+              >
+                Back to Procedure
+              </Button>
+              <div className="space-x-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dashboard')}
+                  disabled={submitting}
+                >
+                  Save for Later
+                </Button>
+                <Button
+                  onClick={handleSubmit}
                   disabled={submitting}
                 >
                   {submitting ? 'Submitting...' : 'Submit Booking Request'}
                 </Button>
-                <Button type="submit" className="w-full">Submit Booking Request</Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Booking Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Summary</CardTitle>
-              <CardDescription>
-                Review your booking details
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <dl className="space-y-4">
-                <div>
-                  <dt className="text-sm text-muted-foreground">Procedure</dt>
-                  <dd className="font-medium">{procedure.name}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Patient Name</dt>
-                  <dd className="font-medium">{bookingDetails.name || 'Not specified'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Preferred Date</dt>
-                  <dd className="font-medium">
-                    {date ? format(date, "PPP") : 'Not specified'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Contact</dt>
-                  <dd className="font-medium">
-                    {bookingDetails.email && bookingDetails.phone 
-                      ? `${bookingDetails.email} | ${bookingDetails.phone}`
-                      : 'Not specified'
-                    }
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Virtual Advisor Chat */}
-        <div>
-          <Card className="h-full flex flex-col">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <Avatar>
-                  <AvatarImage src="https://mediglobal-connect.greensphere.one/images/advisor-avatar.jpg" />
-                  <AvatarFallback>VA</AvatarFallback>
-                </Avatar>
-                <div>
-                  <CardTitle>Virtual Advisor</CardTitle>
-                  <CardDescription>Here to help with your booking</CardDescription>
-                </div>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <div className="flex-1 space-y-4 mb-4 max-h-[500px] overflow-y-auto">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex gap-2",
-                      msg.sender === 'user' ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    {msg.sender === 'advisor' && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://mediglobal-connect.greensphere.one/images/advisor-avatar.jpg" />
-                        <AvatarFallback>VA</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div
-                      className={cn(
-                        "rounded-lg p-3 max-w-[80%]",
-                        msg.sender === 'user'
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      )}
-                    >
-                      <p className="text-sm">{msg.message}</p>
-                      <span className="text-xs opacity-70">
-                        {format(msg.timestamp, "HH:mm")}
-                      </span>
-                    </div>
-                    {msg.sender === 'user' && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>ME</AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type your message..."
-                />
-                <Button onClick={handleSendMessage}>Send</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

@@ -19,7 +19,6 @@ interface Procedure {
 
 export const ManageProcedures = () => {
   const [procedures, setProcedures] = useState<Procedure[]>([])
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newProcedure, setNewProcedure] = useState({
     name: '',
@@ -28,14 +27,11 @@ export const ManageProcedures = () => {
 
   const fetchProcedures = async () => {
     try {
-      setLoading(true)
       const response = await proceduresApi.getAll()
       if (response.error) throw new Error(response.error)
       setProcedures(response.data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch procedures')
-    } finally {
-      setLoading(false)
     }
   }
 

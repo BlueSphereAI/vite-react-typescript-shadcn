@@ -33,11 +33,10 @@ export interface PriceComparison {
 export interface Booking {
   uuid: string
   user_id: string
-  facility_id: string
   procedure_id: string
+  facility_id: string
   itinerary: string
-  status: 'pending' | 'confirmed' | 'completed'
-  preferred_date: string
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed'
 }
 
 // Procedures API
