@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { bookingsApi, proceduresApi } from "@/lib/api"
 
 interface Booking {
-  booking_id: string
+  uuid: string
   user_id: string
   facility_id: string
   procedure_id: string
@@ -24,7 +24,7 @@ interface Booking {
 }
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
   description: string
 }
@@ -77,8 +77,8 @@ export const Dashboard = () => {
         if (bookingsRes.error) throw new Error(bookingsRes.error)
         if (proceduresRes.error) throw new Error(proceduresRes.error)
 
-        setBookings(bookingsRes.data)
-        setProcedures(proceduresRes.data)
+        setBookings(bookingsRes.data ?? [])
+        setProcedures(proceduresRes.data ?? [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data')
       } finally {
@@ -98,7 +98,7 @@ export const Dashboard = () => {
   }
 
   const getProcedureName = (procedureId: string) => {
-    const procedure = procedures.find(p => p.procedure_id === procedureId)
+    const procedure = procedures.find(p => p.uuid === procedureId)
     return procedure?.name || 'Unknown Procedure'
   }
 
@@ -233,14 +233,14 @@ export const Dashboard = () => {
                 {bookings.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No procedures booked yet. 
-                    <Link to="/procedures" className="text-primary hover:underline ml-1">
+                    <Link to="/procedures/search" className="text-primary hover:underline ml-1">
                       Browse available procedures
                     </Link>
                   </div>
                 ) : (
                   bookings.map(booking => (
                     <div
-                      key={booking.booking_id}
+                      key={booking.uuid}
                       className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div className="space-y-1">
@@ -297,7 +297,7 @@ export const Dashboard = () => {
                 <div className="space-y-6">
                   {bookings.map(booking => (
                     <div
-                      key={booking.booking_id}
+                      key={booking.uuid}
                       className="p-4 border rounded-lg space-y-2"
                     >
                       <div className="flex justify-between items-start">

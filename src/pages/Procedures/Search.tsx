@@ -7,18 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { proceduresApi, facilitiesApi, priceComparisonsApi } from "@/lib/api"
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
   description: string
 }
 
 interface Facility {
-  facility_id: string
+  uuid: string
   name: string
   location: string
   certifications: string
@@ -27,7 +26,7 @@ interface Facility {
 }
 
 interface PriceComparison {
-  comparison_id: string
+  uuid: string
   procedure_id: string
   facility_id: string
   us_price: number
@@ -60,9 +59,9 @@ export const Search = () => {
         if (facilitiesRes.error) throw new Error(facilitiesRes.error)
         if (comparisonsRes.error) throw new Error(comparisonsRes.error)
 
-        setProcedures(proceduresRes.data)
-        setFacilities(facilitiesRes.data)
-        setPriceComparisons(comparisonsRes.data)
+        setProcedures(proceduresRes.data || [])
+        setFacilities(facilitiesRes.data || [])
+        setPriceComparisons(comparisonsRes.data || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data')
       } finally {
@@ -94,7 +93,7 @@ export const Search = () => {
   const getFacilitiesForProcedure = (procedureId: string) => {
     const comparisons = priceComparisons.filter(c => c.procedure_id === procedureId)
     const facilityIds = comparisons.map(c => c.facility_id)
-    return facilities.filter(f => facilityIds.includes(f.facility_id))
+    return facilities.filter(f => facilityIds.includes(f.uuid))
   }
 
   const getLocationsForProcedure = (procedureId: string) => {
@@ -158,21 +157,17 @@ export const Search = () => {
           </div>
         ) : (
           filteredProcedures.map((procedure) => {
-            const savings = calculateSavings(procedure.procedure_id)
-            const locations = getLocationsForProcedure(procedure.procedure_id)
-            const facilitiesCount = getFacilitiesForProcedure(procedure.procedure_id).length
+            const savings = calculateSavings(procedure.uuid)
+            const locations = getLocationsForProcedure(procedure.uuid)
+            const facilitiesCount = getFacilitiesForProcedure(procedure.uuid).length
 
             return (
-              <Card key={procedure.procedure_id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+              <Card key={procedure.uuid} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                 <CardHeader>
                   <img 
-                    src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.procedure_id}.jpg`}
+                    src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.uuid}.jpg`}
                     alt={procedure.name}
                     className="w-full h-48 object-cover rounded-t-lg transform group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "https://mediglobal-connect.greensphere.one/images/procedures/default.jpg"
-                    }}
                   />
                   <CardTitle className="mt-4 group-hover:text-primary transition-colors">
                     {procedure.name}
@@ -205,7 +200,7 @@ export const Search = () => {
                       className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                       asChild
                     >
-                      <Link to={`/procedures/${procedure.procedure_id}`}>
+                      <Link to={`/procedures/${procedure.uuid}`}>
                         View Details
                       </Link>
                     </Button>

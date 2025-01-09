@@ -10,17 +10,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { proceduresApi, priceComparisonsApi } from "@/lib/api"
 
 interface Procedure {
-  procedure_id: string
   name: string
   description: string
+  uuid: string
 }
 
 interface PriceComparison {
-  comparison_id: string
   procedure_id: string
   us_price: number
   international_price: number
   travel_cost: number
+  uuid: string
 }
 
 export const Home = () => {
@@ -43,8 +43,8 @@ export const Home = () => {
         if (proceduresRes.error) throw new Error(proceduresRes.error)
         if (comparisonsRes.error) throw new Error(comparisonsRes.error)
 
-        setProcedures(proceduresRes.data)
-        setPriceComparisons(comparisonsRes.data)
+        setProcedures(proceduresRes.data ?? [])
+        setPriceComparisons(comparisonsRes.data ?? [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data')
       } finally {
@@ -135,18 +135,15 @@ export const Home = () => {
               ))
             ) : (
               procedures.slice(0, 3).map((procedure) => {
-                const savings = calculateSavings(procedure.procedure_id)
+                const savings = calculateSavings(procedure.uuid)
+                console.log(procedure)
                 return (
-                  <Card key={procedure.procedure_id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  <Card key={procedure.uuid} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                     <CardHeader>
                       <img 
-                        src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.procedure_id}.jpg`}
+                        src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.uuid}.jpg`}
                         alt={procedure.name}
                         className="w-full h-48 object-cover rounded-t-lg transform group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "https://mediglobal-connect.greensphere.one/images/procedures/default.jpg"
-                        }}
                       />
                       <CardTitle className="mt-4 group-hover:text-primary transition-colors">
                         {procedure.name}
@@ -164,7 +161,7 @@ export const Home = () => {
                         className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                         asChild
                       >
-                        <Link to={`/procedures/${procedure.procedure_id}`}>
+                        <Link to={`/procedures/${procedure.uuid}`}>
                           View Comparison
                         </Link>
                       </Button>
