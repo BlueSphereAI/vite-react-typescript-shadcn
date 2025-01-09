@@ -1,68 +1,115 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { proceduresApi, facilitiesApi, priceComparisonsApi } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
-interface Facility {
+interface Procedure {
+  procedure_id: string
   name: string
-  location: string
-  procedureCost: number
-  travelCost: number
-  totalCost: number
-  rating: number
-  accreditations: string[]
-  doctorQualifications: string[]
-  patientReviews: {
-    rating: number
-    comment: string
-    date: string
-  }[]
+  description: string
 }
 
-// Mock data - in a real app, this would come from an API
-const mockFacilities: Facility[] = [
-  {
-    name: "Global Care Hospital",
-    location: "Bangkok, Thailand",
-    procedureCost: 12000,
-    travelCost: 2000,
-    totalCost: 14000,
-    rating: 4.8,
-    accreditations: ["JCI Accredited", "ISO 9001:2015"],
-    doctorQualifications: ["Board Certified", "20+ Years Experience"],
-    patientReviews: [
-      {
-        rating: 5,
-        comment: "Excellent care and results",
-        date: "2023-12-01"
-      }
-    ]
-  },
-  {
-    name: "American Medical Center",
-    location: "New York, USA",
-    procedureCost: 35000,
-    travelCost: 500,
-    totalCost: 35500,
-    rating: 4.9,
-    accreditations: ["JCAHO Accredited", "AAAHC Certified"],
-    doctorQualifications: ["Harvard Medical School", "30+ Years Experience"],
-    patientReviews: [
-      {
-        rating: 5,
-        comment: "World-class treatment",
-        date: "2023-11-15"
-      }
-    ]
-  }
-]
+interface Facility {
+  facility_id: string
+  name: string
+  location: string
+  certifications: string
+  doctor_info: string
+  patient_reviews: string
+}
+
+interface PriceComparison {
+  comparison_id: string
+  procedure_id: string
+  facility_id: string
+  us_price: number
+  international_price: number
+  travel_cost: number
+}
 
 export const ProcedureDetail = () => {
   const { id } = useParams()
-  
+  const [procedure, setProcedure] = useState<Procedure | null>(null)
+  const [facilities, setFacilities] = useState<Facility[]>([])
+  const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return
+
+      try {
+        setLoading(true)
+        const [procedureRes, facilitiesRes, comparisonsRes] = await Promise.all([
+          proceduresApi.getById(id),
+          facilitiesApi.getAll(),
+          priceComparisonsApi.getAll()
+        ])
+
+        if (procedureRes.error) throw new Error(procedureRes.error)
+        if (facilitiesRes.error) throw new Error(facilitiesRes.error)
+        if (comparisonsRes.error) throw new Error(comparisonsRes.error)
+
+        setProcedure(procedureRes.data)
+        setFacilities(facilitiesRes.data)
+        setPriceComparisons(comparisonsRes.data.filter(c => c.procedure_id === id))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-[300px] w-full" />
+          </div>
+          <Skeleton className="h-[200px] w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !procedure) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error || 'Procedure not found'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  const getFacilityById = (facilityId: string) => 
+    facilities.find(f => f.facility_id === facilityId)
+
+  const calculateSavings = (comparison: PriceComparison) => {
+    const savings = comparison.us_price - (comparison.international_price + comparison.travel_cost)
+    const percentage = Math.round((savings / comparison.us_price) * 100)
+    return { savings, percentage }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -71,38 +118,50 @@ export const ProcedureDetail = () => {
         <span className="mx-2">/</span>
         <Link to="/procedures" className="hover:text-primary">Procedures</Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">Knee Replacement</span>
+        <span className="text-foreground">{procedure.name}</span>
       </nav>
 
       {/* Procedure Information */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
         <div className="md:col-span-2">
-          <h1 className="text-4xl font-bold mb-4">Knee Replacement Surgery</h1>
+          <h1 className="text-4xl font-bold mb-4">{procedure.name}</h1>
           <p className="text-lg text-muted-foreground mb-6">
-            A surgical procedure to replace the weight-bearing surfaces of the knee joint to relieve pain and disability.
+            {procedure.description}
           </p>
           <img 
-            src="https://mediglobal-connect.greensphere.one/images/procedures/knee-replacement-detail.jpg"
-            alt="Knee Replacement Procedure"
-            className="w-full rounded-lg mb-6"
+            src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.procedure_id}.jpg`}
+            alt={procedure.name}
+            className="w-full rounded-lg mb-6 h-[300px] object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = "https://mediglobal-connect.greensphere.one/images/procedures/default.jpg"
+            }}
           />
         </div>
         <div className="bg-primary/5 p-6 rounded-lg h-fit">
           <h2 className="text-xl font-semibold mb-4">Quick Facts</h2>
           <dl className="space-y-4">
+            {priceComparisons.length > 0 && (
+              <>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Potential Savings</dt>
+                  <dd className="text-2xl font-bold text-primary">
+                    Up to {calculateSavings(priceComparisons[0]).percentage}%
+                  </dd>
+                </div>
+                <Separator />
+              </>
+            )}
             <div>
-              <dt className="text-sm text-muted-foreground">Average Savings</dt>
-              <dd className="text-2xl font-bold text-primary">Up to 70%</dd>
+              <dt className="text-sm text-muted-foreground">Available Facilities</dt>
+              <dd className="font-semibold">{facilities.length}</dd>
             </div>
             <Separator />
             <div>
-              <dt className="text-sm text-muted-foreground">Recovery Time</dt>
-              <dd className="font-semibold">4-6 weeks</dd>
-            </div>
-            <Separator />
-            <div>
-              <dt className="text-sm text-muted-foreground">Success Rate</dt>
-              <dd className="font-semibold">95%</dd>
+              <dt className="text-sm text-muted-foreground">Locations</dt>
+              <dd className="font-semibold">
+                {Array.from(new Set(facilities.map(f => f.location.split(',')[1].trim()))).join(', ')}
+              </dd>
             </div>
           </dl>
         </div>
@@ -120,33 +179,45 @@ export const ProcedureDetail = () => {
                 <TableHead>Procedure Cost</TableHead>
                 <TableHead>Est. Travel Cost</TableHead>
                 <TableHead>Total Cost</TableHead>
-                <TableHead>Rating</TableHead>
+                <TableHead>Potential Savings</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockFacilities.map((facility, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{facility.name}</TableCell>
-                  <TableCell>{facility.location}</TableCell>
-                  <TableCell>${facility.procedureCost.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      ${facility.travelCost.toLocaleString()}
-                      <Button variant="ghost" size="sm" asChild className="h-6 px-2">
-                        <Link to="/travel-expense" className="text-xs">
-                          Estimate
-                        </Link>
+              {priceComparisons.map((comparison) => {
+                const facility = getFacilityById(comparison.facility_id)
+                if (!facility) return null
+
+                const { savings, percentage } = calculateSavings(comparison)
+                const totalCost = comparison.international_price + comparison.travel_cost
+
+                return (
+                  <TableRow key={comparison.comparison_id}>
+                    <TableCell className="font-medium">{facility.name}</TableCell>
+                    <TableCell>{facility.location}</TableCell>
+                    <TableCell>${comparison.international_price.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        ${comparison.travel_cost.toLocaleString()}
+                        <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                          <Link to="/travel-expense" className="text-xs">
+                            Estimate
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold">${totalCost.toLocaleString()}</TableCell>
+                    <TableCell className="text-primary">
+                      ${savings.toLocaleString()} ({percentage}%)
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/procedures/${id}/book`}>Book Now</Link>
                       </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold">${facility.totalCost.toLocaleString()}</TableCell>
-                  <TableCell>{facility.rating}/5</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">View Details</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
@@ -155,47 +226,35 @@ export const ProcedureDetail = () => {
       {/* Facility Credentials */}
       <div className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Facility Credentials</h2>
-        <Tabs defaultValue="global-care">
+        <Tabs defaultValue={facilities[0]?.facility_id}>
           <TabsList className="mb-4">
-            {mockFacilities.map((facility, index) => (
-              <TabsTrigger key={index} value={facility.name.toLowerCase().replace(/\s+/g, '-')}>
+            {facilities.map((facility) => (
+              <TabsTrigger key={facility.facility_id} value={facility.facility_id}>
                 {facility.name}
               </TabsTrigger>
             ))}
           </TabsList>
-          {mockFacilities.map((facility, index) => (
-            <TabsContent key={index} value={facility.name.toLowerCase().replace(/\s+/g, '-')}>
+          {facilities.map((facility) => (
+            <TabsContent key={facility.facility_id} value={facility.facility_id}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Accreditations</h3>
-                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                      {facility.accreditations.map((accreditation, i) => (
-                        <li key={i}>{accreditation}</li>
-                      ))}
-                    </ul>
+                    <div className="text-muted-foreground">
+                      {facility.certifications}
+                    </div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Doctor Qualifications</h3>
-                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                      {facility.doctorQualifications.map((qualification, i) => (
-                        <li key={i}>{qualification}</li>
-                      ))}
-                    </ul>
+                    <div className="text-muted-foreground">
+                      {facility.doctor_info}
+                    </div>
                   </div>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Patient Reviews</h3>
-                  <div className="space-y-4">
-                    {facility.patientReviews.map((review, i) => (
-                      <div key={i} className="bg-primary/5 p-4 rounded-lg">
-                        <div className="flex justify-between mb-2">
-                          <span className="font-semibold">Rating: {review.rating}/5</span>
-                          <span className="text-sm text-muted-foreground">{review.date}</span>
-                        </div>
-                        <p className="text-muted-foreground">{review.comment}</p>
-                      </div>
-                    ))}
+                  <div className="text-muted-foreground">
+                    {facility.patient_reviews}
                   </div>
                 </div>
               </div>

@@ -1,32 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import { Bell, Calendar, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { bookingsApi, proceduresApi } from "@/lib/api"
 
-interface Procedure {
-  id: string
-  name: string
-  facility: string
+interface Booking {
+  booking_id: string
+  user_id: string
+  facility_id: string
+  procedure_id: string
+  itinerary: string
   status: 'pending' | 'confirmed' | 'completed'
-  date: Date
-  cost: number
-  travelCost: number
+  preferred_date: string
 }
 
-interface AdvisorInteraction {
-  id: string
-  date: Date
-  topic: string
-  summary: string
-  messages: number
+interface Procedure {
+  procedure_id: string
+  name: string
+  description: string
 }
 
 interface Notification {
@@ -38,50 +38,12 @@ interface Notification {
   read: boolean
 }
 
-// Mock data
-const mockProcedures: Procedure[] = [
-  {
-    id: "knee-replacement-1",
-    name: "Knee Replacement",
-    facility: "Global Care Hospital",
-    status: 'pending',
-    date: new Date(2024, 2, 15),
-    cost: 12000,
-    travelCost: 2000
-  },
-  {
-    id: "hip-replacement-1",
-    name: "Hip Replacement",
-    facility: "American Medical Center",
-    status: 'confirmed',
-    date: new Date(2024, 3, 1),
-    cost: 15000,
-    travelCost: 2500
-  }
-]
-
-const mockInteractions: AdvisorInteraction[] = [
-  {
-    id: "1",
-    date: new Date(2024, 1, 1),
-    topic: "Initial Consultation",
-    summary: "Discussed treatment options and costs",
-    messages: 12
-  },
-  {
-    id: "2",
-    date: new Date(2024, 1, 5),
-    topic: "Travel Planning",
-    summary: "Reviewed accommodation and flight options",
-    messages: 8
-  }
-]
-
+// Mock notifications - in a real app, this would come from an API
 const mockNotifications: Notification[] = [
   {
     id: "1",
     title: "Booking Confirmation",
-    description: "Your knee replacement procedure has been scheduled",
+    description: "Your procedure has been scheduled",
     date: new Date(2024, 1, 1),
     type: 'success',
     read: false
@@ -98,12 +60,107 @@ const mockNotifications: Notification[] = [
 
 export const Dashboard = () => {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [procedures, setProcedures] = useState<Procedure[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [bookingsRes, proceduresRes] = await Promise.all([
+          bookingsApi.getAll(),
+          proceduresApi.getAll()
+        ])
+
+        if (bookingsRes.error) throw new Error(bookingsRes.error)
+        if (proceduresRes.error) throw new Error(proceduresRes.error)
+
+        setBookings(bookingsRes.data)
+        setProcedures(proceduresRes.data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const markAsRead = (id: string) => {
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
+    )
+  }
+
+  const getProcedureName = (procedureId: string) => {
+    const procedure = procedures.find(p => p.procedure_id === procedureId)
+    return procedure?.name || 'Unknown Procedure'
+  }
+
+  const getStatusColor = (status: Booking['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'text-yellow-500 border-yellow-500'
+      case 'confirmed':
+        return 'text-green-500 border-green-500'
+      case 'completed':
+        return 'text-blue-500 border-blue-500'
+      default:
+        return 'text-gray-500 border-gray-500'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <Skeleton className="h-10 w-10" />
+        </div>
+
+        <div className="space-y-4">
+          {Array(2).fill(null).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {Array(3).fill(null).map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <Skeleton className="h-[600px] w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     )
   }
 
@@ -173,73 +230,94 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {mockProcedures.map(procedure => (
-                  <div
-                    key={procedure.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{procedure.name}</h3>
-                        <Badge variant="outline">{procedure.status}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {procedure.facility}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        {format(procedure.date, "MMM d, yyyy")}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        ${(procedure.cost + procedure.travelCost).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Total Cost</p>
-                      <Button variant="outline" size="sm" className="mt-2" asChild>
-                        <Link to={`/procedures/${procedure.id}`}>
-                          View Details
-                        </Link>
-                      </Button>
-                    </div>
+                {bookings.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No procedures booked yet. 
+                    <Link to="/procedures" className="text-primary hover:underline ml-1">
+                      Browse available procedures
+                    </Link>
                   </div>
-                ))}
+                ) : (
+                  bookings.map(booking => (
+                    <div
+                      key={booking.booking_id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">
+                            {getProcedureName(booking.procedure_id)}
+                          </h3>
+                          <Badge 
+                            variant="outline"
+                            className={cn(getStatusColor(booking.status))}
+                          >
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {booking.itinerary}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          {format(new Date(booking.preferred_date), "MMM d, yyyy")}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/procedures/${booking.procedure_id}`}>
+                            View Details
+                          </Link>
+                        </Button>
+                        {booking.status === 'pending' && (
+                          <Button variant="default" size="sm">
+                            Confirm Booking
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Advisor Interactions */}
+        {/* Recent Activity */}
         <div>
           <Card className="h-full">
             <CardHeader>
-              <CardTitle>Advisor Interactions</CardTitle>
+              <CardTitle>Recent Activity</CardTitle>
               <CardDescription>
-                Your conversation history with medical advisors
+                Your recent interactions and updates
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-6">
-                  {mockInteractions.map(interaction => (
+                  {bookings.map(booking => (
                     <div
-                      key={interaction.id}
+                      key={booking.booking_id}
                       className="p-4 border rounded-lg space-y-2"
                     >
                       <div className="flex justify-between items-start">
-                        <h4 className="font-semibold">{interaction.topic}</h4>
+                        <h4 className="font-semibold">
+                          {getProcedureName(booking.procedure_id)}
+                        </h4>
                         <Badge variant="outline">
                           <MessageSquare className="h-3 w-3 mr-1" />
-                          {interaction.messages}
+                          New Update
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {interaction.summary}
+                        {booking.itinerary}
                       </p>
                       <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>{format(interaction.date, "MMM d, yyyy")}</span>
-                        <Button variant="ghost" size="sm">
-                          View Chat
+                        <span>{format(new Date(booking.preferred_date), "MMM d, yyyy")}</span>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/procedures/${booking.procedure_id}`}>
+                            View Details
+                          </Link>
                         </Button>
                       </div>
                     </div>

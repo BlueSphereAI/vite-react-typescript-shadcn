@@ -1,46 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { proceduresApi, priceComparisonsApi } from "@/lib/api"
 
-interface ComparisonCard {
-  id: string
-  title: string
+interface Procedure {
+  procedure_id: string
+  name: string
   description: string
-  image: string
-  savings: string
 }
 
-const featuredComparisons: ComparisonCard[] = [
-  {
-    id: "hip-replacement",
-    title: "Hip Replacement",
-    description: "Save up to 70% on hip replacement procedures abroad",
-    image: "https://mediglobal-connect.greensphere.one/images/procedures/hip-replacement.jpg",
-    savings: "Average savings: $25,000"
-  },
-  {
-    id: "knee-replacement",
-    title: "Knee Replacement",
-    description: "Quality knee surgery with significant cost savings",
-    image: "https://mediglobal-connect.greensphere.one/images/procedures/knee-replacement.jpg",
-    savings: "Average savings: $20,000"
-  },
-  {
-    id: "dental-implants",
-    title: "Dental Implants",
-    description: "Premium dental care at fraction of US costs",
-    image: "https://mediglobal-connect.greensphere.one/images/procedures/dental-implants.jpg",
-    savings: "Average savings: $3,500"
-  }
-];
+interface PriceComparison {
+  comparison_id: string
+  procedure_id: string
+  us_price: number
+  international_price: number
+  travel_cost: number
+}
 
 export const Home = () => {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
+  const [procedures, setProcedures] = useState<Procedure[]>([])
+  const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [proceduresRes, comparisonsRes] = await Promise.all([
+          proceduresApi.getAll(),
+          priceComparisonsApi.getAll()
+        ])
+
+        if (proceduresRes.error) throw new Error(proceduresRes.error)
+        if (comparisonsRes.error) throw new Error(comparisonsRes.error)
+
+        setProcedures(proceduresRes.data)
+        setPriceComparisons(comparisonsRes.data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -54,13 +67,29 @@ export const Home = () => {
     }
   }
 
+  const calculateSavings = (procedureId: string) => {
+    const comparison = priceComparisons.find(c => c.procedure_id === procedureId)
+    if (!comparison) return null
+
+    const savings = comparison.us_price - (comparison.international_price + comparison.travel_cost)
+    const savingsPercentage = Math.round((savings / comparison.us_price) * 100)
+    return {
+      amount: savings,
+      percentage: savingsPercentage
+    }
+  }
+
   return (
     <div>
       {/* Hero Section with Search */}
-      <section className="bg-primary/5 py-20">
+      <section className="bg-gradient-to-b from-primary/5 to-background py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">Find Affordable Medical Procedures Worldwide</h2>
-          <p className="text-lg text-muted-foreground mb-8">Compare prices, credentials, and travel costs for medical procedures globally</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+            Find Affordable Medical Procedures Worldwide
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Compare prices, credentials, and travel costs for medical procedures globally
+          </p>
           <div className="flex max-w-xl mx-auto gap-4">
             <Input 
               type="text" 
@@ -81,32 +110,69 @@ export const Home = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-10 text-center">Featured Procedure Comparisons</h2>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredComparisons.map((comparison) => (
-              <Card key={comparison.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <img 
-                    src={comparison.image} 
-                    alt={comparison.title} 
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <CardTitle className="mt-4">{comparison.title}</CardTitle>
-                  <CardDescription>{comparison.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-primary font-semibold">{comparison.savings}</p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-4"
-                    asChild
-                  >
-                    <Link to={`/procedures/${comparison.id}`}>
-                      View Comparison
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {loading ? (
+              // Loading skeletons
+              Array(3).fill(null).map((_, index) => (
+                <Card key={index} className="overflow-hidden">
+                  <CardHeader>
+                    <Skeleton className="h-48 w-full rounded-t-lg" />
+                    <Skeleton className="h-6 w-3/4 mt-4" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-10 w-full mt-4" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              procedures.slice(0, 3).map((procedure) => {
+                const savings = calculateSavings(procedure.procedure_id)
+                return (
+                  <Card key={procedure.procedure_id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <CardHeader>
+                      <img 
+                        src={`https://mediglobal-connect.greensphere.one/images/procedures/${procedure.procedure_id}.jpg`}
+                        alt={procedure.name}
+                        className="w-full h-48 object-cover rounded-t-lg transform group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = "https://mediglobal-connect.greensphere.one/images/procedures/default.jpg"
+                        }}
+                      />
+                      <CardTitle className="mt-4 group-hover:text-primary transition-colors">
+                        {procedure.name}
+                      </CardTitle>
+                      <CardDescription>{procedure.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {savings && (
+                        <p className="text-primary font-semibold">
+                          Average savings: ${savings.amount.toLocaleString()} ({savings.percentage}%)
+                        </p>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                        asChild
+                      >
+                        <Link to={`/procedures/${procedure.procedure_id}`}>
+                          View Comparison
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </section>
