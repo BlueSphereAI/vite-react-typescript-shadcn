@@ -38,7 +38,7 @@ function App() {
         {/* Public Routes */}
         <Route element={<MainLayoutWrapper />}>
           <Route path="/" element={<Home />} />
-          <Route path="/procedures/search" element={<Search />} />
+          <Route path="/procedures" element={<Search />} />
           <Route path="/procedures/:id" element={<ProcedureDetail />} />
           <Route path="/travel-expense" element={<TravelExpense />} />
           <Route path="/procedures/:id/book" element={<Booking />} />

@@ -10,20 +10,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { proceduresApi, facilitiesApi, priceComparisonsApi } from "@/lib/api"
+import { generateUUID } from '@/lib/utils'
 
 interface Procedure {
-  procedure_id: string
+  uuid: string
   name: string
 }
 
 interface Facility {
-  facility_id: string
+  uuid: string
   name: string
   location: string
 }
 
 interface PriceComparison {
-  comparison_id: string
+  uuid: string
   procedure_id: string
   facility_id: string
   us_price: number
@@ -84,7 +85,10 @@ export const ManagePriceComparisons = () => {
         return
       }
 
-      const response = await priceComparisonsApi.create(newComparison)
+      const response = await priceComparisonsApi.create({
+        ...newComparison,
+        uuid: generateUUID()
+      })
       if (response.error) throw new Error(response.error)
 
       // Reset form and refresh list
@@ -112,11 +116,11 @@ export const ManagePriceComparisons = () => {
   }
 
   const getProcedureName = (procedureId: string) => {
-    return procedures.find(p => p.procedure_id === procedureId)?.name || 'Unknown Procedure'
+    return procedures.find(p => p.uuid === procedureId)?.name || 'Unknown Procedure'
   }
 
   const getFacilityName = (facilityId: string) => {
-    return facilities.find(f => f.facility_id === facilityId)?.name || 'Unknown Facility'
+    return facilities.find(f => f.uuid === facilityId)?.name || 'Unknown Facility'
   }
 
   return (
@@ -157,7 +161,7 @@ export const ManagePriceComparisons = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {procedures.map((procedure) => (
-                        <SelectItem key={procedure.procedure_id} value={procedure.procedure_id}>
+                        <SelectItem key={procedure.uuid} value={procedure.uuid}>
                           {procedure.name}
                         </SelectItem>
                       ))}
@@ -176,7 +180,7 @@ export const ManagePriceComparisons = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {facilities.map((facility) => (
-                        <SelectItem key={facility.facility_id} value={facility.facility_id}>
+                        <SelectItem key={facility.uuid} value={facility.uuid}>
                           {facility.name}
                         </SelectItem>
                       ))}
@@ -244,7 +248,7 @@ export const ManagePriceComparisons = () => {
                 const totalCost = comparison.international_price + comparison.travel_cost
 
                 return (
-                  <TableRow key={comparison.comparison_id}>
+                  <TableRow key={comparison.uuid}>
                     <TableCell className="font-medium">
                       {getProcedureName(comparison.procedure_id)}
                     </TableCell>
@@ -260,7 +264,7 @@ export const ManagePriceComparisons = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteComparison(comparison.comparison_id)}
+                        onClick={() => handleDeleteComparison(comparison.uuid)}
                       >
                         Delete
                       </Button>
