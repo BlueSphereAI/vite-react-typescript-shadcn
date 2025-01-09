@@ -6,6 +6,7 @@ import { Search } from '@/pages/Procedures/Search'
 import { TravelExpense } from '@/pages/TravelExpense/TravelExpense'
 import { Booking } from '@/pages/Booking/Booking'
 import { Dashboard } from '@/pages/Dashboard/Dashboard'
+import { Contact } from '@/pages/Contact/Contact'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { ManageProcedures } from '@/pages/Admin/ManageProcedures'
@@ -42,6 +43,7 @@ function App() {
           <Route path="/travel-expense" element={<TravelExpense />} />
           <Route path="/procedures/:id/book" element={<Booking />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/contact" element={<Contact />} />
         </Route>
 
         {/* Admin Routes */}

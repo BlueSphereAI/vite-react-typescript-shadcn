@@ -31,7 +31,7 @@ export const ManageProcedures = () => {
       setLoading(true)
       const response = await proceduresApi.getAll()
       if (response.error) throw new Error(response.error)
-      setProcedures(response.data)
+      setProcedures(response.data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch procedures')
     } finally {

@@ -136,7 +136,6 @@ export const Home = () => {
             ) : (
               procedures.slice(0, 3).map((procedure) => {
                 const savings = calculateSavings(procedure.uuid)
-                console.log(procedure)
                 return (
                   <Card key={procedure.uuid} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                     <CardHeader>
