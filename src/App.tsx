@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Home } from '@/pages'
 import { ProcedureDetail } from '@/pages/Procedures/[id]'
+import { Search } from '@/pages/Procedures/Search'
 import { TravelExpense } from '@/pages/TravelExpense/TravelExpense'
 import { Booking } from '@/pages/Booking/Booking'
 import { Dashboard } from '@/pages/Dashboard/Dashboard'
@@ -12,6 +13,7 @@ function App() {
       <MainLayout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/procedures/search" element={<Search />} />
           <Route path="/procedures/:id" element={<ProcedureDetail />} />
           <Route path="/travel-expense" element={<TravelExpense />} />
           <Route path="/procedures/:id/book" element={<Booking />} />

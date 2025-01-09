@@ -38,7 +38,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   variant={location.pathname.includes('/procedures') ? 'default' : 'ghost'}
                   asChild
                 >
-                  <Link to="/procedures">Search Procedures</Link>
+                  <Link to="/procedures/search">Search Procedures</Link>
                 </Button>
               </li>
               <li>
